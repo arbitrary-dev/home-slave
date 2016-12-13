@@ -1,7 +1,8 @@
 #ifndef TASKSMODEL_H
 #define TASKSMODEL_H
 
-#include <QSqlQueryModel>
+#include <QtSql>
+#include <vector>
 
 class TasksModel : public QSqlQueryModel
 {
@@ -17,6 +18,9 @@ public:
     QVariant headerData(int section, Qt::Orientation orientation, int role) const override;
 
 private:
+    std::vector<QString> vPeople;
+
+    void initPeople();
 };
 
 #endif // TASKSMODEL_H

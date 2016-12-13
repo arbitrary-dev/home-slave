@@ -4,6 +4,15 @@ TasksModel::TasksModel(QObject *parent)
     : QSqlQueryModel(parent)
 {
     setQuery("SELECT name FROM tasks");
+    initPeople();
+}
+
+void TasksModel::initPeople() {
+      QSqlQuery q("SELECT * FROM people");
+      int iName = q.record().indexOf("name");
+
+      while (q.next())
+          vPeople.push_back(q.value(iName).toString());
 }
 
 int TasksModel::rowCount(const QModelIndex &parent) const
@@ -19,7 +28,9 @@ int TasksModel::columnCount(const QModelIndex &parent) const
     if (parent.isValid())
         return 0;
 
-    return QSqlQueryModel::columnCount(parent) + 3;
+    return QSqlQueryModel::columnCount(parent)
+           + vPeople.size()
+           + 1; // rate column
 }
 
 QVariant TasksModel::data(const QModelIndex &index, int role) const
@@ -51,5 +62,5 @@ QVariant TasksModel::headerData(int section, Qt::Orientation orientation, int ro
     else if (section == columnCount() - 1)
         return tr("Rate");
 
-    return tr("Pers%1").arg(section);
+    return vPeople[section - 1];
 }
