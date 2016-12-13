@@ -19,7 +19,7 @@ int main(int argc, char *argv[])
 
 void initDb()
 {
-    // TODO check for DB existense, initialize tables otherwise.
+    // TODO check for DB existence, initialize tables otherwise.
     QSqlDatabase db = QSqlDatabase::addDatabase("QSQLITE");
     db.setDatabaseName("tasks.db");
 
