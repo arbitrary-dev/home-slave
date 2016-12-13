@@ -46,11 +46,10 @@ QVariant TasksModel::headerData(int section, Qt::Orientation orientation, int ro
     if (!(role == Qt::DisplayRole && orientation == Qt::Horizontal))
         return QVariant();
 
-    if (section == 0) {
+    if (section == 0)
         return tr("Name");
-    } else if (section == columnCount() - 1) {
+    else if (section == columnCount() - 1)
         return tr("Rate");
-    }
 
     return tr("Pers%1").arg(section);
 }
