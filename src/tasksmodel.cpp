@@ -1,18 +1,34 @@
 #include "tasksmodel.h"
 
 TasksModel::TasksModel(QObject *parent)
-    : QSqlQueryModel(parent)
+    : QAbstractTableModel(parent)
 {
-    setQuery("SELECT name FROM tasks");
     initPeople();
+    initData();
 }
 
-void TasksModel::initPeople() {
-      QSqlQuery q("SELECT * FROM people");
-      int iName = q.record().indexOf("name");
+void TasksModel::initPeople()
+{
+    QSqlQuery q("SELECT * FROM people");
+    int iName = q.record().indexOf("name");
 
-      while (q.next())
-          vPeople.push_back(q.value(iName).toString());
+    while (q.next())
+        vpeople.push_back(q.value(iName).toString());
+}
+
+void TasksModel::initData()
+{
+    QSqlQuery q("SELECT name FROM tasks ORDER BY name");
+    int iName = q.record().indexOf("name");
+
+    while (q.next()) {
+        Task task(q.value(iName).toString());
+
+        Esteems ests;
+
+        Row row = { task, ests };
+        vdata.push_back(row);
+    }
 }
 
 int TasksModel::rowCount(const QModelIndex &parent) const
@@ -20,7 +36,8 @@ int TasksModel::rowCount(const QModelIndex &parent) const
     if (parent.isValid())
         return 0;
 
-    return QSqlQueryModel::rowCount(parent) + 1;
+    return vdata.size()
+           + 1; // new task row
 }
 
 int TasksModel::columnCount(const QModelIndex &parent) const
@@ -28,9 +45,9 @@ int TasksModel::columnCount(const QModelIndex &parent) const
     if (parent.isValid())
         return 0;
 
-    return QSqlQueryModel::columnCount(parent)
-           + vPeople.size()
-           + 1; // rate column
+    return 1 // task name
+           + vpeople.size()
+           + 1; // total esteem
 }
 
 QVariant TasksModel::data(const QModelIndex &index, int role) const
@@ -41,13 +58,15 @@ QVariant TasksModel::data(const QModelIndex &index, int role) const
     int row = index.row();
     int column = index.column();
 
-    if (    row    <  rowCount() - 1
-         && column == 0)
-        return QSqlQueryModel::data(index, role);
-
     if (role == Qt::DisplayRole)
+    {
+        if (    row < rowCount() - 1
+                && column == 0)
+            return vdata[row].task;
+
         return QString("%1, %2").arg(column + 1)
                                 .arg(row + 1);
+    }
 
     return QVariant();
 }
@@ -58,9 +77,9 @@ QVariant TasksModel::headerData(int section, Qt::Orientation orientation, int ro
         return QVariant();
 
     if (section == 0)
-        return tr("Name");
+        return tr("Task");
     else if (section == columnCount() - 1)
-        return tr("Rate");
+        return tr("Total");
 
-    return vPeople[section - 1];
+    return vpeople[section - 1];
 }

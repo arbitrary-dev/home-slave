@@ -2,9 +2,8 @@
 #define TASKSMODEL_H
 
 #include <QtSql>
-#include <vector>
 
-class TasksModel : public QSqlQueryModel
+class TasksModel : public QAbstractTableModel
 {
     Q_OBJECT
 
@@ -18,9 +17,26 @@ public:
     QVariant headerData(int section, Qt::Orientation orientation, int role) const override;
 
 private:
-    std::vector<QString> vPeople;
+    typedef QString Person;
+    typedef QString Task;
+
+    struct Esteem {
+        float val;
+        bool tkn; // taken
+    };
+
+    typedef QHash<Person, Esteem> Esteems;
+
+    struct Row {
+        Task task;
+        Esteems esteems;
+    };
+
+    QVector<Person> vpeople;
+    QVector<Row> vdata;
 
     void initPeople();
+    void initData();
 };
 
 #endif // TASKSMODEL_H
