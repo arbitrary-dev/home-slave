@@ -3,6 +3,32 @@
 
 #include <QtSql>
 
+struct Person {
+    uint id;
+    QString name;
+
+    operator QVariant() const { return name; }
+};
+
+struct Task {
+    uint id;
+    QString name;
+
+    operator QVariant() const { return name; }
+};
+
+struct Esteem {
+    int val;
+    bool tkn; // taken
+};
+
+typedef QHash<Person, Esteem> Esteems;
+
+struct Row {
+    Task task;
+    Esteems esteems;
+};
+
 class TasksModel : public QAbstractTableModel
 {
     Q_OBJECT
@@ -17,26 +43,19 @@ public:
     QVariant headerData(int section, Qt::Orientation orientation, int role) const override;
 
 private:
-    typedef QString Person;
-    typedef QString Task;
-
-    struct Esteem {
-        float val;
-        bool tkn; // taken
-    };
-
-    typedef QHash<Person, Esteem> Esteems;
-
-    struct Row {
-        Task task;
-        Esteems esteems;
-    };
-
     QVector<Person> vpeople;
     QVector<Row> vdata;
 
     void initPeople();
     void initData();
 };
+
+inline bool operator ==(const Person &a, const Person &b) {
+    return a.id == b.id;
+}
+
+inline uint qHash(const Person &p, uint seed) {
+    return qHash(p.id, seed);
+}
 
 #endif // TASKSMODEL_H
