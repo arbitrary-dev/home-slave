@@ -1,2 +1,4 @@
-debug/*
-!debug/README
+/debug/*
+!/debug/README
+
+/*.user
