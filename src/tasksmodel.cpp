@@ -74,6 +74,23 @@ int TasksModel::columnCount(const QModelIndex &parent) const
            + 1; // total esteem
 }
 
+Qt::ItemFlags TasksModel::flags(const QModelIndex &index) const
+{
+    Qt::ItemFlags fs = QAbstractTableModel::flags(index);
+
+    if (inEsteems(index))
+        fs |= Qt::ItemIsEditable;
+
+    return fs;
+}
+
+inline bool TasksModel::inEsteems(const QModelIndex &index) const
+{
+    return (isStage(ST_TAKE_TASKS) || index.row() < rowCount() - 1)
+           && index.column() > 0
+           && index.column() < columnCount() - 1;
+}
+
 QVariant TasksModel::data(const QModelIndex &index, int role) const
 {
     if (!index.isValid())
@@ -85,19 +102,33 @@ QVariant TasksModel::data(const QModelIndex &index, int role) const
     if (role == Qt::DisplayRole)
     {
         if (row < rowCount() - 1) {
+            if (inEsteems(index))
+                return vdata[row].esteems[vpeople[col - 1]];
             if (col == 0)
                 return vdata[row].task;
-            else if (col == columnCount() - 1)
+            if (col == columnCount() - 1)
                 return QString("-1");
-
-            return QString::number(vdata[row].esteems[vpeople[col - 1]].val);
         }
-
-        if (col == 0)
+        else if (col == 0) {
             return tr("insert new task...");
+        }
     }
 
     return QVariant();
+}
+
+bool TasksModel::setData(const QModelIndex &index, const QVariant &value, int role)
+{
+    if (role != Qt::EditRole)
+        return false;
+
+    int row = index.row();
+    int col = index.column();
+
+    if (inEsteems(index))
+        vdata[row].esteems[vpeople[col - 1]] = qvariant_cast<Esteem>(value);
+
+    return false;
 }
 
 QVariant TasksModel::headerData(int section, Qt::Orientation orientation, int role) const
@@ -111,4 +142,9 @@ QVariant TasksModel::headerData(int section, Qt::Orientation orientation, int ro
         return tr("Total");
 
     return vpeople[section - 1];
+}
+
+void TasksModel::toggleStage()
+{
+    currStage = isStage(ST_INPUT_ESTEEMS) ? ST_TAKE_TASKS : ST_INPUT_ESTEEMS;
 }

@@ -16,10 +16,12 @@ VPATH += ./src ./inc ./ui
 
 SOURCES += main.cpp\
            mainwindow.cpp \
-           tasksmodel.cpp
+           tasksmodel.cpp \
+           tasksdelegate.cpp
 
 HEADERS  += mainwindow.h \
             tasksmodel.h \
-            ui_mainwindow.h
+            ui_mainwindow.h \
+            tasksdelegate.h
 
 FORMS    += mainwindow.ui

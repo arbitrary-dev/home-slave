@@ -20,7 +20,11 @@ struct Task {
 struct Esteem {
     int val;
     bool tkn; // taken
+
+    operator QVariant() const { return QVariant::fromValue(*this); }
 };
+
+Q_DECLARE_METATYPE(Esteem)
 
 typedef QHash<Person, Esteem> Esteems;
 
@@ -34,20 +38,35 @@ class TasksModel : public QAbstractTableModel
     Q_OBJECT
 
 public:
+    enum Stage {
+        ST_INPUT_ESTEEMS,
+        ST_TAKE_TASKS
+    };
+
     explicit TasksModel(QObject *parent = 0);
 
     int rowCount(const QModelIndex &parent = QModelIndex()) const override;
     int columnCount(const QModelIndex &parent = QModelIndex()) const override;
 
+    Qt::ItemFlags flags(const QModelIndex &index) const override;
+
     QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const override;
+    bool setData(const QModelIndex &index, const QVariant &value, int role) override;
     QVariant headerData(int section, Qt::Orientation orientation, int role) const override;
 
+    void toggleStage();
+    bool isStage(Stage stage) const { return currStage == stage; }
+
 private:
+    Stage currStage = ST_INPUT_ESTEEMS;
+
     QVector<Person> vpeople;
     QVector<Row> vdata;
 
     void initPeople();
     void initData();
+
+    inline bool inEsteems(const QModelIndex &index) const;
 };
 
 inline bool operator ==(const Person &a, const Person &b) {

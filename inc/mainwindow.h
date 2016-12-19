@@ -18,6 +18,8 @@ public:
 
 private:
     Ui::MainWindow *ui;
+
+    void toggleStage();
 };
 
 #endif // MAINWINDOW_H
