@@ -3,6 +3,7 @@
 #include <QApplication>
 #include <QHBoxLayout>
 #include <QCheckBox>
+#include <QComboBox>
 #include <QMouseEvent>
 
 QWidget *TasksDelegate::createEditor(QWidget *parent, const QStyleOptionViewItem &option,
@@ -13,16 +14,18 @@ QWidget *TasksDelegate::createEditor(QWidget *parent, const QStyleOptionViewItem
 
     QWidget *w = new QWidget(parent);
     QHBoxLayout *l = new QHBoxLayout;
-    QCheckBox *e = new QCheckBox;
 
-    connect(e, &QCheckBox::stateChanged, this, &TasksDelegate::cbStateChanged);
+    QWidget *e =
+        isStage(index, TasksModel::ST_INPUT_ESTEEMS)
+            ? makeComboBox(w)
+            : makeCheckBox(w);
 
     l->addWidget(e);
     l->setAlignment(Qt::AlignCenter);
     l->setContentsMargins(0, 0, 0, 0);
 
     w->setLayout(l);
-    w->installEventFilter(new CheckBoxFilter(e));
+    w->installEventFilter(new LayoutClickFilter());
 
     return w;
 }
@@ -34,9 +37,15 @@ void TasksDelegate::setEditorData(QWidget *editor, const QModelIndex &index) con
         return;
     }
 
-    QCheckBox *e = cb(editor);
-    Esteem est = qvariant_cast<Esteem>(index.data());
-    e->setChecked(est.tkn);
+    Esteem est = esteem(index);
+
+    if (isStage(index, TasksModel::ST_INPUT_ESTEEMS)) {
+        QComboBox *e = find<QComboBox>(editor);
+        e->setCurrentIndex(est.val - 1);
+    } else {
+        QCheckBox *e = find<QCheckBox>(editor);
+        e->setChecked(est.tkn);
+    }
 }
 
 void TasksDelegate::setModelData(QWidget *editor, QAbstractItemModel *model,
@@ -47,9 +56,16 @@ void TasksDelegate::setModelData(QWidget *editor, QAbstractItemModel *model,
         return;
     }
 
-    QCheckBox *e = cb(editor);
-    Esteem est = qvariant_cast<Esteem>(index.data());
-    est.tkn = e->isChecked();
+    Esteem est = esteem(index);
+
+    if (isStage(index, TasksModel::ST_INPUT_ESTEEMS)) {
+        QComboBox *e = find<QComboBox>(editor);
+        est.val = e->currentIndex() + 1;
+    } else {
+        QCheckBox *e = find<QCheckBox>(editor);
+        est.tkn = e->isChecked();
+    }
+
     model->setData(index, est, Qt::EditRole);
 }
 
@@ -64,20 +80,44 @@ void TasksDelegate::updateEditorGeometry(QWidget *editor, const QStyleOptionView
     editor->setGeometry(option.rect);
 }
 
-QCheckBox *TasksDelegate::cb(const QWidget *w)
+bool TasksDelegate::isStage(const QModelIndex &index, TasksModel::Stage stage)
 {
-    return w->findChild<QCheckBox*>();
+    const TasksModel *model = dynamic_cast<const TasksModel *>(index.model());
+    return model->isStage(stage);
 }
 
-void TasksDelegate::cbStateChanged()
+QWidget *TasksDelegate::makeCheckBox(QWidget *parent) const
 {
-    QCheckBox *cb = qobject_cast<QCheckBox*>(sender());
-    QWidget *w = cb->parentWidget();
-
-    emit commitData(w);
+    QCheckBox *cb = new QCheckBox;
+    connect(cb, &QCheckBox::stateChanged, [=] { emit commitData(parent); });
+    return cb;
 }
 
-bool CheckBoxFilter::eventFilter(QObject *watched, QEvent *event)
+QWidget *TasksDelegate::makeComboBox(QWidget *parent) const
+{
+    QComboBox *cmb = new QComboBox;
+
+    for (int i = 1; i <= 5; ++i) {
+        QString str = QString::number(i);
+
+        if (i == 1 || i == 5) {
+            str.append(" - ");
+            str.append(tr(i == 1 ? "easy" : "hard"));
+        }
+
+        cmb->addItem(str);
+    }
+
+    connect(cmb, static_cast<void (QComboBox::*)(int)>(&QComboBox::activated), // activated used in layout filter v
+            [=] {
+                emit commitData(parent);
+                emit closeEditor(parent);
+            });
+
+    return cmb;
+}
+
+bool LayoutClickFilter::eventFilter(QObject *watched, QEvent *event)
 {
     if (event->type() == QEvent::MouseButtonRelease) {
         QWidget *w = qobject_cast<QWidget *>(watched);
@@ -86,7 +126,11 @@ bool CheckBoxFilter::eventFilter(QObject *watched, QEvent *event)
         if (!w->rect().contains(me->pos()))
             return false;
 
-        cb->toggle();
+        if (find<QCheckBox>(w))
+            find<QCheckBox>(w)->toggle();
+        else
+            emit find<QComboBox>(w)->activated(-1); // activated connected to commit & close ^
+
         return true;
     }
 

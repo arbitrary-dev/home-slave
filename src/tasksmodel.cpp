@@ -78,7 +78,7 @@ Qt::ItemFlags TasksModel::flags(const QModelIndex &index) const
 {
     Qt::ItemFlags fs = QAbstractTableModel::flags(index);
 
-    if (inEsteems(index))
+    if (index.column() == 0 || inEsteems(index))
         fs |= Qt::ItemIsEditable;
 
     return fs;
@@ -97,22 +97,38 @@ QVariant TasksModel::data(const QModelIndex &index, int role) const
     if (!index.isValid())
         return QVariant();
 
-    int row = index.row();
-    int col = index.column();
+    int r = index.row();
+    int rc = rowCount();
+    int c = index.column();
+    int cc = columnCount();
+    bool s_input = isStage(ST_INPUT_ESTEEMS);
+    bool r_disp = role == Qt::DisplayRole;
+    bool r_edit = role == Qt::EditRole;
+    bool r_algn = role == Qt::TextAlignmentRole;
 
-    if (role == Qt::DisplayRole)
-    {
-        if (row < rowCount() - 1) {
-            if (inEsteems(index))
-                return vdata[row].esteems[vpeople[col - 1]];
-            if (col == 0)
-                return vdata[row].task;
-            if (col == columnCount() - 1)
+    if (r < rc - (s_input ? 1 : 0)) {
+        if (inEsteems(index)) {
+            Esteem est = vdata[r].esteems[vpeople[c - 1]];
+            if (r_disp)
+                return s_input ? QVariant::fromValue(est.val) : est;
+            if (r_edit)
+                return est;
+            if (r_algn)
+                return Qt::AlignCenter;
+        }
+
+        if (c == 0 && (r_disp || r_edit))
+            return vdata[r].task;
+
+        if (c == cc - 1) {
+            if (r_disp)
                 return QString("-1");
+            if (r_algn)
+                return Qt::AlignCenter;
         }
-        else if (col == 0) {
-            return tr("insert new task...");
-        }
+    }
+    if (s_input && r == rc - 1 && r_disp) {
+        return tr("insert new task...");
     }
 
     return QVariant();
@@ -126,8 +142,19 @@ bool TasksModel::setData(const QModelIndex &index, const QVariant &value, int ro
     int row = index.row();
     int col = index.column();
 
-    if (inEsteems(index))
+    if (inEsteems(index)) {
         vdata[row].esteems[vpeople[col - 1]] = qvariant_cast<Esteem>(value);
+        return true;
+    }
+    if (col == 0) {
+        if (isStage(ST_INPUT_ESTEEMS) && row == rowCount() - 1) {
+            // TODO handle new task addition
+            return true;
+        }
+
+        vdata[row].task.name = qvariant_cast<QString>(value);
+        return true;
+    }
 
     return false;
 }

@@ -24,26 +24,28 @@ public:
                               const QModelIndex &index) const override;
 
 private:
-    static inline QCheckBox *cb(const QWidget *w);
+    static inline bool isStage(const QModelIndex &index, TasksModel::Stage stage);
+
+    QWidget *makeCheckBox(QWidget *parent) const;
+    QWidget *makeComboBox(QWidget *parent) const;
 
     static bool isntEsteem(const QModelIndex &index) { return !index.data(Qt::EditRole).canConvert<Esteem>(); }
     static Esteem esteem(const QModelIndex &index) { return qvariant_cast<Esteem>(index.data(Qt::EditRole)); }
-
-private slots:
-    void cbStateChanged();
 };
 
-class CheckBoxFilter : public QObject
+class LayoutClickFilter : public QObject
 {
     Q_OBJECT
 
 public:
-    CheckBoxFilter(QCheckBox *_cb) : cb(_cb) { }
-
     bool eventFilter(QObject *watched, QEvent *event) override;
-
-private:
-    QCheckBox *cb;
 };
+
+// Helpers
+
+template<class T>
+static inline T *find(const QWidget *w) {
+    return w->findChild<T *>();
+}
 
 #endif // TASKSDELEGATE_H

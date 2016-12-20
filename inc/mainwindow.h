@@ -20,6 +20,7 @@ private:
     Ui::MainWindow *ui;
 
     void toggleStage();
+    void refreshTable();
 };
 
 #endif // MAINWINDOW_H

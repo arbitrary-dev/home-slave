@@ -17,13 +17,11 @@ MainWindow::MainWindow(QWidget *parent) :
     hh->setSectionResizeMode(0, QHeaderView::ResizeMode::Stretch);
 
     t->setShowGrid(false);
-
     t->setItemDelegate(new TasksDelegate);
-    t->setEditTriggers(QAbstractItemView::SelectedClicked);
+    t->setEditTriggers(QAbstractItemView::DoubleClicked);
     t->setSelectionMode(QAbstractItemView::NoSelection);
 
-    toggleStage(); // FIXME x
-
+    refreshTable();
     t->show();
 }
 
@@ -37,22 +35,31 @@ MainWindow::~MainWindow()
     delete ui;
 }
 
-// TODO test
 void MainWindow::toggleStage()
 {
     QTableView *t = ui->tableView;
     TasksModel *m = dynamic_cast<TasksModel*>(t->model());
 
     m->toggleStage();
+    refreshTable();
+}
+
+// TODO test
+void MainWindow::refreshTable()
+{
+    QTableView *t = ui->tableView;
+    TasksModel *m = dynamic_cast<TasksModel*>(t->model());
+    bool s_input = m->isStage(TasksModel::ST_INPUT_ESTEEMS);
 
     typedef void (QAbstractItemView::*Func) (const QModelIndex &);
-    Func peFunc = m->isStage(TasksModel::ST_INPUT_ESTEEMS)
+    Func peFunc = s_input
         ? &QAbstractItemView::closePersistentEditor
         : &QAbstractItemView::openPersistentEditor;
 
     int rc = m->rowCount();
     int cc = m->columnCount();
 
+    // Make checkboxes persistent.
     for (int r = 0; r < rc; ++r)
         for (int c = 0; c < cc; ++c)
         {
@@ -60,4 +67,8 @@ void MainWindow::toggleStage()
             if (i.data().canConvert<Esteem>())
                 (t->*peFunc)(i);
         }
+
+    // Merge cols in an input new task row.
+    if (s_input)
+        t->setSpan(rc - 1, 0, 1, cc);
 }
