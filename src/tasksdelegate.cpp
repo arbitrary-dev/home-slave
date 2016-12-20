@@ -64,7 +64,7 @@ void TasksDelegate::updateEditorGeometry(QWidget *editor, const QStyleOptionView
     editor->setGeometry(option.rect);
 }
 
-QCheckBox *TasksDelegate::cb(const QWidget *w) const
+QCheckBox *TasksDelegate::cb(const QWidget *w)
 {
     return w->findChild<QCheckBox*>();
 }

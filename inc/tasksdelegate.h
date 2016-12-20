@@ -24,8 +24,10 @@ public:
                               const QModelIndex &index) const override;
 
 private:
-    inline QCheckBox *cb(const QWidget *w) const;
-    bool isntEsteem(const QModelIndex &index) const { return !index.data().canConvert<Esteem>(); }
+    static inline QCheckBox *cb(const QWidget *w);
+
+    static bool isntEsteem(const QModelIndex &index) { return !index.data(Qt::EditRole).canConvert<Esteem>(); }
+    static Esteem esteem(const QModelIndex &index) { return qvariant_cast<Esteem>(index.data(Qt::EditRole)); }
 
 private slots:
     void cbStateChanged();
