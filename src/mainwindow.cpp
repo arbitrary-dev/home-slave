@@ -37,6 +37,7 @@ MainWindow::~MainWindow()
     delete ui;
 }
 
+// TODO test
 void MainWindow::toggleStage()
 {
     QTableView *t = ui->tableView;

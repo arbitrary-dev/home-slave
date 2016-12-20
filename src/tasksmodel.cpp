@@ -91,6 +91,7 @@ inline bool TasksModel::inEsteems(const QModelIndex &index) const
            && index.column() < columnCount() - 1;
 }
 
+// TODO test
 QVariant TasksModel::data(const QModelIndex &index, int role) const
 {
     if (!index.isValid())
@@ -131,6 +132,7 @@ bool TasksModel::setData(const QModelIndex &index, const QVariant &value, int ro
     return false;
 }
 
+// TODO test
 QVariant TasksModel::headerData(int section, Qt::Orientation orientation, int role) const
 {
     if (!(role == Qt::DisplayRole && orientation == Qt::Horizontal))
