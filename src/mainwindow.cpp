@@ -9,8 +9,9 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     ui->setupUi(this);
 
-    TasksModel *m = new TasksModel;
     QTableView *t = ui->tableView;
+
+    TasksModel *m = new TasksModel;
     t->setModel(m);
 
     QHeaderView *hh = t->horizontalHeader();
@@ -22,6 +23,7 @@ MainWindow::MainWindow(QWidget *parent) :
     t->setSelectionMode(QAbstractItemView::NoSelection);
 
     refreshTable();
+
     t->show();
 }
 
