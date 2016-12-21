@@ -1,5 +1,7 @@
 #include "tasksmodel.h"
 
+#include <numeric>
+
 TasksModel::TasksModel(QObject *parent)
     : QAbstractTableModel(parent)
 {
@@ -91,6 +93,24 @@ inline bool TasksModel::inEsteems(const QModelIndex &index) const
            && index.column() < columnCount() - 1;
 }
 
+QString TasksModel::calcTotalEsteem(int row) const
+{
+    QList<Esteem> es = vdata[row].esteems.values();
+
+    if (es.isEmpty())
+        return QString("--");
+
+    typedef double (*Func) (double a, Esteem b);
+    Func op = [](double a, Esteem b) {
+        return (a + b.val) / 2;
+    };
+
+    double res((*es.begin()).val);
+    res = std::accumulate(es.begin() + 1, es.end(), res, op);
+
+    return QString::number(res, 'f', 1);
+}
+
 // TODO test
 QVariant TasksModel::data(const QModelIndex &index, int role) const
 {
@@ -122,7 +142,7 @@ QVariant TasksModel::data(const QModelIndex &index, int role) const
 
         if (c == cc - 1) {
             if (r_disp)
-                return QString("-1");
+                return calcTotalEsteem(r);
             if (r_algn)
                 return Qt::AlignCenter;
         }
@@ -144,6 +164,8 @@ bool TasksModel::setData(const QModelIndex &index, const QVariant &value, int ro
 
     if (inEsteems(index)) {
         vdata[row].esteems[vpeople[col - 1]] = qvariant_cast<Esteem>(value);
+        QModelIndex idx = createIndex(row, columnCount() - 1);
+        emit dataChanged(idx, idx);
         return true;
     }
     if (col == 0) {
@@ -168,7 +190,7 @@ QVariant TasksModel::headerData(int section, Qt::Orientation orientation, int ro
     if (section == 0)
         return tr("Task");
     else if (section == columnCount() - 1)
-        return tr("Total");
+        return tr("Avg.");
 
     return vpeople[section - 1];
 }
