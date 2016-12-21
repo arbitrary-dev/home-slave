@@ -93,6 +93,7 @@ inline bool TasksModel::inEsteems(const QModelIndex &index) const
            && index.column() < columnCount() - 1;
 }
 
+// TODO test
 QString TasksModel::calcTotalEsteem(int row) const
 {
     QList<Esteem> es = vdata[row].esteems.values();
