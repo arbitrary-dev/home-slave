@@ -14,8 +14,11 @@ MainWindow::MainWindow(QWidget *parent) :
     TasksModel *m = new TasksModel;
     t->setModel(m);
 
+    // setup columns' width
     QHeaderView *hh = t->horizontalHeader();
     hh->setSectionResizeMode(0, QHeaderView::ResizeMode::Stretch);
+    for (int i = 1; i < m->columnCount(); ++i)
+        t->setColumnWidth(i, colWidth(m, i));
 
     t->setShowGrid(false);
     t->setItemDelegate(new TasksDelegate);
@@ -73,4 +76,10 @@ void MainWindow::refreshTable()
     // Merge cols in an input new task row.
     if (s_input)
         t->setSpan(rc - 1, 0, 1, cc);
+}
+
+int MainWindow::colWidth(const QAbstractTableModel *m, int col)
+{
+    QSize size = qvariant_cast<QSize>(m->headerData(col, Qt::Horizontal, Qt::SizeHintRole));
+    return size.width();
 }

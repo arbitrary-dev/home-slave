@@ -21,6 +21,8 @@ private:
 
     void toggleStage();
     void refreshTable();
+
+    static inline int colWidth(const QAbstractTableModel *m, int col);
 };
 
 #endif // MAINWINDOW_H

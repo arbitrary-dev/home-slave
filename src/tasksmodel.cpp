@@ -185,12 +185,17 @@ bool TasksModel::setData(const QModelIndex &index, const QVariant &value, int ro
 // TODO test
 QVariant TasksModel::headerData(int section, Qt::Orientation orientation, int role) const
 {
-    if (!(role == Qt::DisplayRole && orientation == Qt::Horizontal))
+    bool o_horz = orientation == Qt::Horizontal;
+
+    if (role == Qt::SizeHintRole && section > 0 && o_horz)
+        return QSize(50, 0);
+
+    if (!(role == Qt::DisplayRole && o_horz))
         return QVariant();
 
     if (section == 0)
         return tr("Task");
-    else if (section == columnCount() - 1)
+    if (section == columnCount() - 1)
         return tr("Avg.");
 
     return vpeople[section - 1];
