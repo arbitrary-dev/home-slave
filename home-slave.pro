@@ -21,7 +21,6 @@ SOURCES += main.cpp\
 
 HEADERS  += mainwindow.h \
             tasksmodel.h \
-            ui_mainwindow.h \
             tasksdelegate.h
 
 FORMS    += mainwindow.ui
