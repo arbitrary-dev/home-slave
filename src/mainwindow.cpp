@@ -1,4 +1,5 @@
 #include "mainwindow.h"
+
 #include "tasksmodel.h"
 #include "tasksdelegate.h"
 #include "ui_mainwindow.h"
@@ -13,6 +14,10 @@ MainWindow::MainWindow(QWidget *parent) :
 
     TasksModel *m = new TasksModel;
     t->setModel(m);
+    t->setShowGrid(false);
+    t->setItemDelegate(new TasksDelegate);
+    t->setEditTriggers(QAbstractItemView::DoubleClicked);
+    t->setSelectionMode(QAbstractItemView::NoSelection);
 
     // setup columns' width
     QHeaderView *hh = t->horizontalHeader();
@@ -20,14 +25,8 @@ MainWindow::MainWindow(QWidget *parent) :
     for (int i = 1; i < m->columnCount(); ++i)
         t->setColumnWidth(i, colWidth(m, i));
 
-    t->setShowGrid(false);
-    t->setItemDelegate(new TasksDelegate);
-    t->setEditTriggers(QAbstractItemView::DoubleClicked);
-    t->setSelectionMode(QAbstractItemView::NoSelection);
 
     refreshTable();
-
-    t->show();
 }
 
 MainWindow::~MainWindow()

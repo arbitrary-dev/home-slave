@@ -190,6 +190,9 @@ QVariant TasksModel::headerData(int section, Qt::Orientation orientation, int ro
     if (role == Qt::SizeHintRole && section > 0 && o_horz)
         return QSize(50, 0);
 
+    if (role == Qt::TextAlignmentRole && section == 0)
+        return Qt::AlignLeft;
+
     if (!(role == Qt::DisplayRole && o_horz))
         return QVariant();
 
