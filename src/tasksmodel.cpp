@@ -82,7 +82,7 @@ Qt::ItemFlags TasksModel::flags(const QModelIndex &index) const
 {
     Qt::ItemFlags fs = QAbstractTableModel::flags(index);
 
-    if (index.column() == 0 || inEsteems(index))
+    if ((isStage(ST_INPUT_ESTEEMS) && index.column() == 0) || inEsteems(index))
         fs |= Qt::ItemIsEditable;
 
     return fs;
@@ -191,21 +191,29 @@ QVariant TasksModel::headerData(int section, Qt::Orientation orientation, int ro
 {
     bool o_horz = orientation == Qt::Horizontal;
 
-    if (role == Qt::SizeHintRole && section > 0 && o_horz)
-        return QSize(50, 0);
+    switch (role) {
+    case Qt::DisplayRole:
+        if (!o_horz) break;
 
-    if (role == Qt::TextAlignmentRole && section == 0)
-        return Qt::AlignLeft;
+        if (section == 0)
+            return tr("Task");
+        if (section == columnCount() - 1)
+            return tr("Avg.");
 
-    if (!(role == Qt::DisplayRole && o_horz))
-        return QVariant();
+        return vpeople[section - 1];
 
-    if (section == 0)
-        return tr("Task");
-    if (section == columnCount() - 1)
-        return tr("Avg.");
+    case Qt::SizeHintRole:
+        if (section > 0 && o_horz)
+            return QSize(50, 0);
+        break;
 
-    return vpeople[section - 1];
+    case Qt::TextAlignmentRole:
+        if (section == 0)
+            return Qt::AlignLeft;
+        break;
+    }
+
+    return QVariant();
 }
 
 void TasksModel::toggleStage()
