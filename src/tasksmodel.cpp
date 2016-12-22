@@ -170,8 +170,11 @@ bool TasksModel::setData(const QModelIndex &index, const QVariant &value, int ro
 
     if (inEsteems(index)) {
         vdata[row].esteems[vpeople[col - 1]] = qvariant_cast<Esteem>(value);
+
+        // refresh avg. column
         QModelIndex idx = createIndex(row, columnCount() - 1);
         emit dataChanged(idx, idx);
+
         return true;
     }
     if (col == 0) {
