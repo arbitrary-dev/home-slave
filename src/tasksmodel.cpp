@@ -9,6 +9,7 @@ TasksModel::TasksModel(QObject *parent)
     initData();
 }
 
+// TODO rfct to setPeople(QList<Person>)
 void TasksModel::initPeople()
 {
     QSqlQuery q("SELECT rowid, name FROM people");
@@ -23,6 +24,7 @@ void TasksModel::initPeople()
     }
 }
 
+// TODO rfct to setData(QList<Task>)
 void TasksModel::initData()
 {
     QSqlQuery q("SELECT rowid, name FROM tasks ORDER BY name");
@@ -127,6 +129,7 @@ QVariant TasksModel::data(const QModelIndex &index, int role) const
     bool r_edit = role == Qt::EditRole;
     bool r_algn = role == Qt::TextAlignmentRole;
 
+    // TODO rfct to switch
     if (r < rc - (s_input ? 1 : 0)) {
         if (inEsteems(index)) {
             Esteem est = vdata[r].esteems[vpeople[c - 1]];

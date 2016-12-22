@@ -28,6 +28,7 @@ Q_DECLARE_METATYPE(Esteem)
 
 typedef QHash<Person, Esteem> Esteems;
 
+// TODO replace with Task
 struct Row {
     Task task;
     Esteems esteems;
@@ -62,7 +63,7 @@ public:
 private:
     Stage currStage = ST_INPUT_ESTEEMS;
 
-    QVector<Person> vpeople;
+    QVector<Person> vpeople; // TODO rfct to QHash<int, Person>
     QVector<Row> vdata;
 
     void initPeople();
