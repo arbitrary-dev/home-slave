@@ -78,6 +78,7 @@ int TasksModel::columnCount(const QModelIndex &parent) const
            + 1; // total esteem
 }
 
+// TODO test
 Qt::ItemFlags TasksModel::flags(const QModelIndex &index) const
 {
     Qt::ItemFlags fs = QAbstractTableModel::flags(index);
