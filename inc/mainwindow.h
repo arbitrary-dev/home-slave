@@ -12,8 +12,8 @@ class MainWindow : public QMainWindow
 {
     Q_OBJECT
 
-    static const char *BTN_INPUT_ESTEEMS;
-    static const char *BTN_TAKE_TASKS;
+    static const char *STR_INPUT_ESTEEMS;
+    static const char *STR_TAKE_TASKS;
 
 public:
     explicit MainWindow(QWidget *parent = 0);

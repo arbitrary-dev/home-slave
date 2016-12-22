@@ -4,14 +4,14 @@
 #include <QtSql>
 
 struct Person {
-    uint id;
+    int id;
     QString name;
 
     operator QVariant() const { return name; }
 };
 
 struct Task {
-    uint id;
+    int id;
     QString name;
 
     operator QVariant() const { return name; }
@@ -38,6 +38,8 @@ class TasksModel : public QAbstractTableModel
     Q_OBJECT
 
 public:
+    static const char *STR_NO_ESTEEM;
+
     enum Stage {
         ST_INPUT_ESTEEMS,
         ST_TAKE_TASKS

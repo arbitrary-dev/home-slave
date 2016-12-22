@@ -6,8 +6,8 @@
 
 #include <QPushButton>
 
-const char *MainWindow::BTN_INPUT_ESTEEMS = "Input esteems";
-const char *MainWindow::BTN_TAKE_TASKS = "Take tasks!";
+const char *MainWindow::STR_INPUT_ESTEEMS = "Input esteems";
+const char *MainWindow::STR_TAKE_TASKS = "Take tasks!";
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -24,13 +24,13 @@ MainWindow::MainWindow(QWidget *parent) :
     t->setEditTriggers(QAbstractItemView::DoubleClicked);
     t->setSelectionMode(QAbstractItemView::NoSelection);
 
-    // setup columns' width
+    // columns' width
     QHeaderView *hh = t->horizontalHeader();
     hh->setSectionResizeMode(0, QHeaderView::ResizeMode::Stretch);
     for (int i = 1; i < m->columnCount(); ++i)
         t->setColumnWidth(i, colWidth(m, i));
 
-    // Stage toggle button.
+    // stage toggle button
     QPushButton *bToggle = ui->btnToggleStage;
     connect(bToggle, &QPushButton::clicked, this, &MainWindow::toggleStage);
 
@@ -86,7 +86,7 @@ void MainWindow::refreshView()
 
     // Stage toggle button text update.
     QPushButton *bToggle = ui->btnToggleStage;
-    bToggle->setText(tr(s_input ? BTN_TAKE_TASKS : BTN_INPUT_ESTEEMS));
+    bToggle->setText(tr(s_input ? STR_TAKE_TASKS : STR_INPUT_ESTEEMS));
 
     // refresh
     QModelIndex start = m->index(0, 0);

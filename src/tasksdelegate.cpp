@@ -60,7 +60,9 @@ void TasksDelegate::setModelData(QWidget *editor, QAbstractItemModel *model,
 
     if (isStage(index, TasksModel::ST_INPUT_ESTEEMS)) {
         QComboBox *e = find<QComboBox>(editor);
-        est.val = e->currentIndex() + 1;
+        int val = e->currentIndex();
+        if (val == -1) return;
+        est.val = val + 1;
     } else {
         QCheckBox *e = find<QCheckBox>(editor);
         est.tkn = e->isChecked();

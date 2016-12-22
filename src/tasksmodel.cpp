@@ -16,8 +16,8 @@ void TasksModel::initPeople()
     int iname = q.record().indexOf("name");
 
     while (q.next()) {
-        uint id(q.value(iid).toUInt());
-        QString name(q.value(iname).toString());
+        int id = q.value(iid).toInt();
+        QString name = q.value(iname).toString();
         Person person = { id, name };
         vpeople.push_back(person);
     }
@@ -33,8 +33,8 @@ void TasksModel::initData()
     qe.prepare("SELECT * FROM esteems WHERE task = :t AND person = :p");
 
     while (q.next()) {
-        uint id(q.value(iid).toUInt());
-        QString name(q.value(iname).toString());
+        int id = q.value(iid).toInt();
+        QString name = q.value(iname).toString();
         Task task = { id, name };
 
         Esteems ests;
@@ -110,6 +110,8 @@ double TasksModel::calcAvgEsteem(QList<Esteem> &es) const
     return res;
 }
 
+const char *TasksModel::STR_NO_ESTEEM = "--";
+
 // TODO test
 QVariant TasksModel::data(const QModelIndex &index, int role) const
 {
@@ -128,8 +130,11 @@ QVariant TasksModel::data(const QModelIndex &index, int role) const
     if (r < rc - (s_input ? 1 : 0)) {
         if (inEsteems(index)) {
             Esteem est = vdata[r].esteems[vpeople[c - 1]];
-            if (r_disp)
+            if (r_disp) {
+                if (est.val == 0)
+                    return STR_NO_ESTEEM;
                 return s_input ? QVariant::fromValue(est.val) : est;
+            }
             if (r_edit)
                 return est;
             if (r_algn)
@@ -144,7 +149,7 @@ QVariant TasksModel::data(const QModelIndex &index, int role) const
                 QList<Esteem> es = vdata[r].esteems.values();
 
                 if (es.isEmpty())
-                    return QString("--");
+                    return STR_NO_ESTEEM;
 
                 double avg = calcAvgEsteem(es);
                 return QString::number(avg, 'f', 1);
@@ -165,25 +170,28 @@ bool TasksModel::setData(const QModelIndex &index, const QVariant &value, int ro
     if (role != Qt::EditRole)
         return false;
 
-    int row = index.row();
-    int col = index.column();
+    int r = index.row();
+    int c = index.column();
 
     if (inEsteems(index)) {
-        vdata[row].esteems[vpeople[col - 1]] = qvariant_cast<Esteem>(value);
+        vdata[r].esteems[vpeople[c - 1]] = qvariant_cast<Esteem>(value);
+
+        emit dataChanged(index, index);
 
         // refresh avg. column
-        QModelIndex idx = createIndex(row, columnCount() - 1);
+        QModelIndex idx = createIndex(r, columnCount() - 1);
         emit dataChanged(idx, idx);
 
         return true;
     }
-    if (col == 0) {
-        if (isStage(ST_INPUT_ESTEEMS) && row == rowCount() - 1) {
+
+    if (c == 0) {
+        if (isStage(ST_INPUT_ESTEEMS) && r == rowCount() - 1) {
             // TODO handle new task addition
             return true;
         }
 
-        vdata[row].task.name = qvariant_cast<QString>(value);
+        vdata[r].task.name = qvariant_cast<QString>(value);
         return true;
     }
 
