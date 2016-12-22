@@ -190,7 +190,8 @@ bool TasksModel::setData(const QModelIndex &index, const QVariant &value, int ro
 
     if (c == 0) {
         if (isStage(ST_INPUT_ESTEEMS) && r == rowCount() - 1) {
-            // TODO handle new task addition
+            QString name = qvariant_cast<QString>(value);
+            addTaskRow(index, name);
             return true;
         }
 
@@ -199,6 +200,21 @@ bool TasksModel::setData(const QModelIndex &index, const QVariant &value, int ro
     }
 
     return false;
+}
+
+void TasksModel::addTaskRow(const QModelIndex &index, const QString &name)
+{
+    if (name.trimmed().isEmpty())
+        return;
+
+    int r = index.row();
+    emit beginInsertRows(index.parent(), r, r);
+
+    Task task = { -1, name };
+    Row row = { task, Esteems() };
+    vdata.append(row);
+
+    emit endInsertRows();
 }
 
 // TODO test

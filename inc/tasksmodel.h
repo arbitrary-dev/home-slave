@@ -69,6 +69,8 @@ private:
     void initPeople();
     void initData();
 
+    void addTaskRow(const QModelIndex &index, const QString &name);
+
     inline bool inEsteems(const QModelIndex &index) const;
     inline double calcAvgEsteem(QList<Esteem> &es) const;
 };

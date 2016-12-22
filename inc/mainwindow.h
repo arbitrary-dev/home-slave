@@ -12,6 +12,7 @@ class MainWindow : public QMainWindow
 {
     Q_OBJECT
 
+    static const char *STR_INVAL_ESTEEMS;
     static const char *STR_INPUT_ESTEEMS;
     static const char *STR_TAKE_TASKS;
 
@@ -23,11 +24,13 @@ private:
     Ui::MainWindow *ui;
 
     void refreshView();
+    void disableToggleButton(bool disable);
 
     static inline int colWidth(const QAbstractTableModel *m, int col);
 
 private slots:
     void toggleStage();
+    void refreshToggleButton();
 };
 
 #endif // MAINWINDOW_H

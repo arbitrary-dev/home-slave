@@ -6,6 +6,7 @@
 
 #include <QPushButton>
 
+const char *MainWindow::STR_INVAL_ESTEEMS = "In order to proceed, all esteems should be valid.";
 const char *MainWindow::STR_INPUT_ESTEEMS = "Input esteems";
 const char *MainWindow::STR_TAKE_TASKS = "Take tasks!";
 
@@ -33,7 +34,15 @@ MainWindow::MainWindow(QWidget *parent) :
     // stage toggle button
     QPushButton *bToggle = ui->btnToggleStage;
     connect(bToggle, &QPushButton::clicked, this, &MainWindow::toggleStage);
+    connect(m, &TasksModel::rowsInserted, this, [this] { disableToggleButton(true); });
+    connect(m, &TasksModel::dataChanged, this,
+            [this, bToggle] (const QModelIndex &idx, const QModelIndex  &, const QVector<int> &) {
+                if (    !bToggle->isEnabled()
+                        && idx.data(Qt::EditRole).canConvert<Esteem>())
+                    refreshToggleButton();
+            });
 
+    refreshToggleButton();
     refreshView();
 }
 
@@ -54,6 +63,46 @@ void MainWindow::toggleStage()
 
     m->toggleStage();
     refreshView();
+}
+
+void MainWindow::refreshToggleButton()
+{
+    QTableView *t = ui->tableView;
+    TasksModel *m = dynamic_cast<TasksModel*>(t->model());
+
+    int rc = m->rowCount();
+    int cc = m->columnCount();
+
+    // Check if there's any missing esteem.
+    for (int r = 0; r < rc; ++r)
+        for (int c = 0; c < cc; ++c)
+        {
+            QModelIndex i(m->index(r, c));
+            QVariant qvar = i.data(Qt::EditRole);
+
+            if (!qvar.canConvert<Esteem>())
+                continue;
+
+            Esteem est(qvariant_cast<Esteem>(qvar));
+
+            if (est.val > 0)
+                continue;
+
+            // Disable toggle button 'till all esteems are valid.
+            disableToggleButton(true);
+
+            return;
+        }
+
+    // All esteems are valid.
+    disableToggleButton(false);
+}
+
+void MainWindow::disableToggleButton(bool disable)
+{
+    QPushButton *btn = ui->btnToggleStage;
+    btn->setDisabled(disable);
+    btn->setToolTip(disable ? tr(STR_INVAL_ESTEEMS) : "");
 }
 
 // TODO test
