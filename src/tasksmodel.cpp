@@ -62,8 +62,10 @@ int TasksModel::rowCount(const QModelIndex &parent) const
     if (parent.isValid())
         return 0;
 
+    bool s_input = isStage(ST_INPUT_ESTEEMS);
+
     return vdata.size()
-           + 1; // new task row
+           + (s_input ? 1 : 0); // new task row
 }
 
 int TasksModel::columnCount(const QModelIndex &parent) const
