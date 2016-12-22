@@ -96,13 +96,8 @@ inline bool TasksModel::inEsteems(const QModelIndex &index) const
 }
 
 // TODO test
-QString TasksModel::calcTotalEsteem(int row) const
+double TasksModel::calcAvgEsteem(QList<Esteem> &es) const
 {
-    QList<Esteem> es = vdata[row].esteems.values();
-
-    if (es.isEmpty())
-        return QString("--");
-
     typedef double (*Func) (double a, Esteem b);
     Func op = [](double a, Esteem b) {
         return (a + b.val) / 2;
@@ -111,7 +106,7 @@ QString TasksModel::calcTotalEsteem(int row) const
     double res((*es.begin()).val);
     res = std::accumulate(es.begin() + 1, es.end(), res, op);
 
-    return QString::number(res, 'f', 1);
+    return res;
 }
 
 // TODO test
@@ -144,8 +139,15 @@ QVariant TasksModel::data(const QModelIndex &index, int role) const
             return vdata[r].task;
 
         if (c == cc - 1) {
-            if (r_disp)
-                return calcTotalEsteem(r);
+            if (r_disp) {
+                QList<Esteem> es = vdata[r].esteems.values();
+
+                if (es.isEmpty())
+                    return QString("--");
+
+                double avg = calcAvgEsteem(es);
+                return QString::number(avg, 'f', 1);
+            }
             if (r_algn)
                 return Qt::AlignCenter;
         }

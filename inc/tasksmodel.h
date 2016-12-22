@@ -67,7 +67,7 @@ private:
     void initData();
 
     inline bool inEsteems(const QModelIndex &index) const;
-    inline QString calcTotalEsteem(int row) const;
+    inline double calcAvgEsteem(QList<Esteem> &es) const;
 };
 
 inline bool operator ==(const Person &a, const Person &b) {
