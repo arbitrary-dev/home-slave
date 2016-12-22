@@ -99,7 +99,7 @@ inline bool TasksModel::inEsteems(const QModelIndex &index) const
 }
 
 // TODO test
-double TasksModel::calcAvgEsteem(QList<Esteem> &es) const
+double TasksModel::calcAvgEsteem(const QList<Esteem> &es) const
 {
     typedef double (*Func) (double a, Esteem b);
     Func op = [](double a, Esteem b) {
@@ -113,6 +113,7 @@ double TasksModel::calcAvgEsteem(QList<Esteem> &es) const
 }
 
 const char *TasksModel::STR_NO_ESTEEM = "--";
+const char *TasksModel::STR_INS_NEW_TASK = "insert new task...";
 
 // TODO test
 QVariant TasksModel::data(const QModelIndex &index, int role) const
@@ -125,44 +126,62 @@ QVariant TasksModel::data(const QModelIndex &index, int role) const
     int c = index.column();
     int cc = columnCount();
     bool s_input = isStage(ST_INPUT_ESTEEMS);
-    bool r_disp = role == Qt::DisplayRole;
-    bool r_edit = role == Qt::EditRole;
-    bool r_algn = role == Qt::TextAlignmentRole;
 
-    // TODO rfct to switch
-    if (r < rc - (s_input ? 1 : 0)) {
-        if (inEsteems(index)) {
-            Esteem est = vdata[r].esteems[vpeople[c - 1]];
-            if (r_disp) {
+    switch (role) {
+    case Qt::DisplayRole:
+        if (r < rc - (s_input ? 1 : 0)) {
+            if (inEsteems(index)) {
+                Esteem est = vdata[r].esteems[vpeople[c - 1]];
                 if (est.val == 0)
                     return STR_NO_ESTEEM;
-                return s_input ? QVariant::fromValue(est.val) : est;
+                return s_input ? QVariant::fromValue(est.val) : est; // esteem
             }
-            if (r_edit)
-                return est;
-            if (r_algn)
-                return Qt::AlignCenter;
-        }
 
-        if (c == 0 && (r_disp || r_edit))
-            return vdata[r].task;
+            if (c == 0)
+                return vdata[r].task; // task name
 
-        if (c == cc - 1) {
-            if (r_disp) {
+            if (c == cc - 1) {
                 QList<Esteem> es = vdata[r].esteems.values();
 
                 if (es.isEmpty())
                     return STR_NO_ESTEEM;
 
                 double avg = calcAvgEsteem(es);
-                return QString::number(avg, 'f', 1);
+                return QString::number(avg, 'f', 1); // avg. column
             }
-            if (r_algn)
-                return Qt::AlignCenter;
         }
-    }
-    if (s_input && r == rc - 1 && r_disp) {
-        return tr("insert new task...");
+
+        if (s_input && r == rc - 1)
+            return tr(STR_INS_NEW_TASK); // insert new task row
+
+        break;
+
+    case Qt::EditRole:
+        if (r < rc - (s_input ? 1 : 0) && inEsteems(index)) // esteem
+            return vdata[r].esteems[vpeople[c - 1]];
+
+        break;
+
+    case Qt::TextAlignmentRole:
+        if (r < rc - (s_input ? 1 : 0) && (inEsteems(index) || c == cc - 1)) // esteem & avg
+            return Qt::AlignCenter;
+
+        break;
+
+    case Qt::FontRole:
+        if (s_input && r == rc - 1) { // insert new task row
+            QFont f;
+            f.setItalic(true);
+            return f;
+        }
+
+        break;
+
+    case Qt::ForegroundRole:
+        if (s_input && r == rc - 1)
+            return QColor(Qt::lightGray); // insert new task row
+
+        break;
     }
 
     return QVariant();

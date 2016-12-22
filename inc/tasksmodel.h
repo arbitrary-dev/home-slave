@@ -40,6 +40,7 @@ class TasksModel : public QAbstractTableModel
 
 public:
     static const char *STR_NO_ESTEEM;
+    static const char *STR_INS_NEW_TASK;
 
     enum Stage {
         ST_INPUT_ESTEEMS,
@@ -72,7 +73,7 @@ private:
     void addTaskRow(const QModelIndex &index, const QString &name);
 
     inline bool inEsteems(const QModelIndex &index) const;
-    inline double calcAvgEsteem(QList<Esteem> &es) const;
+    inline double calcAvgEsteem(const QList<Esteem> &es) const;
 };
 
 inline bool operator ==(const Person &a, const Person &b) {
