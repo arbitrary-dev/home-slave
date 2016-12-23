@@ -4,10 +4,13 @@
 #include "ui_mainwindow.h"
 
 #include <QPushButton>
+#include <QCloseEvent>
+#include <QMessageBox>
 
 const char *MainWindow::STR_INVAL_ESTEEMS = "In order to proceed, all esteems should be valid.";
 const char *MainWindow::STR_INPUT_ESTEEMS = "Input esteems";
 const char *MainWindow::STR_TAKE_TASKS = "Take tasks!";
+const char *MainWindow::STR_PERST_CHANGES = "Persist changes to %1?";
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -106,6 +109,30 @@ void MainWindow::refreshToggleButton()
 
     // All esteems are valid.
     disableToggleButton(false);
+}
+
+void MainWindow::closeEvent(QCloseEvent *event)
+{
+    using Btn = QMessageBox::StandardButton;
+
+    Btn res = QMessageBox::question(
+        this, QCoreApplication::applicationName(),
+        tr(STR_PERST_CHANGES).arg("tasks.db"), // TODO replace tasks.db with variable
+        Btn::Yes | Btn::No | Btn::Cancel);
+
+    switch (res) {
+    case Btn::Cancel:
+        event->ignore();
+        break;
+
+    case Btn::Yes:
+        QSqlDatabase::database().commit();
+        // fall-through
+    case Btn::No:
+    default:
+        event->accept();
+        break;
+    }
 }
 
 void MainWindow::disableToggleButton(bool disable)

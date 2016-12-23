@@ -17,6 +17,7 @@ class MainWindow : public QMainWindow
     static const char *STR_INVAL_ESTEEMS;
     static const char *STR_INPUT_ESTEEMS;
     static const char *STR_TAKE_TASKS;
+    static const char *STR_PERST_CHANGES;
 
 public:
     explicit MainWindow(QWidget *parent = 0);
@@ -34,6 +35,9 @@ private:
 private slots:
     void toggleStage();
     void refreshToggleButton();
+
+protected:
+    void closeEvent(QCloseEvent *event) override;
 };
 
 #endif // MAINWINDOW_H
