@@ -157,8 +157,13 @@ QVariant TasksModel::data(const QModelIndex &index, int role) const
         break;
 
     case Qt::EditRole:
-        if (r < rc - (s_input ? 1 : 0) && inEsteems(index)) // esteem
-            return vdata[r].esteems[person(c).id];
+        if (r < rc - (s_input ? 1 : 0)) {
+            if (c == 0)
+                return vdata[r]; // task name
+
+            if (inEsteems(index)) // esteem
+                return vdata[r].esteems[person(c).id];
+        }
 
         break;
 
