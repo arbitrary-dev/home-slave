@@ -41,17 +41,13 @@ MainWindow::MainWindow(QWidget *parent) :
 
     // handle rows events
 
-    connect(m, &TasksModel::rowsInserted, this, [this] { disableToggleButton(true); });
+    connect(m, &TasksModel::rowsInserted, this, &MainWindow::taskAdded);
 
+    connect(m, &TasksModel::rowsAboutToBeRemoved, this, &MainWindow::taskDeleted);
     connect(m, &TasksModel::rowsRemoved, this,
             [this, bToggle] { if (!bToggle->isEnabled()) refreshToggleButton(); });
 
-    connect(m, &TasksModel::dataChanged, this,
-            [this, bToggle] (const QModelIndex &idx, const QModelIndex  &, const QVector<int> &) {
-                if (    !bToggle->isEnabled()
-                        && idx.data(Qt::EditRole).canConvert<Esteem>())
-                    refreshToggleButton();
-            });
+    connect(m, &TasksModel::dataChanged, this, &MainWindow::taskChanged);
 
     // refresh view
 
@@ -109,6 +105,107 @@ void MainWindow::refreshToggleButton()
 
     // All esteems are valid.
     disableToggleButton(false);
+}
+
+bool MainWindow::taskAdded(const QModelIndex &, int row, int)
+{
+    Task &task = tasksModel->task(row);
+
+    QSqlQuery q;
+    q.prepare("INSERT INTO tasks (name) VALUES (:name)");
+    q.bindValue(":name", task.name);
+
+    if (!q.exec()) {
+        qDebug() << "ERR: Query failed\n" << q.lastError();
+        return false;
+    }
+
+    q.exec("SELECT last_insert_rowid()");
+    q.first();
+    int rowid = q.value(0).toInt();
+    task.id = rowid;
+
+    qDebug("Task #%d \"%s\" was inserted", rowid, qPrintable(task.name));
+
+    // Add esteems associated with task
+
+    q.prepare("INSERT INTO esteems (task, person, esteem, taken) VALUES (:t, :p, :val, :tkn)");
+    q.bindValue(":t", task.id);
+
+    QHashIterator<PersonId, Esteem> i(task.esteems);
+    while (i.hasNext()) {
+        i.next();
+        q.bindValue(":p", i.key());
+
+        {
+            const Esteem &e = i.value();
+            q.bindValue(":val", e.val);
+            q.bindValue(":tkn", e.tkn);
+        }
+
+        if (!q.exec()) {
+            qDebug() << "ERR: Query failed\n" << q.lastError();
+            return false;
+        }
+    }
+
+    disableToggleButton(true);
+
+    return true;
+}
+
+bool MainWindow::taskDeleted(const QModelIndex &, int row, int)
+{
+    Task &task = tasksModel->task(row);
+
+    // TODO taskDeleted
+
+    qDebug("Task #%d \"%s\" was deleted", task.id, qPrintable(task.name));
+
+    return true;
+}
+
+bool MainWindow::taskChanged(const QModelIndex &index, const QModelIndex &, const QVector<int> &)
+{
+    int col = index.column();
+    int row = index.row();
+    Task &task = tasksModel->task(row);
+    QSqlQuery q;
+
+    if (col == 0) {
+        // Task name
+
+        q.prepare("UPDATE tasks SET name = :name WHERE rowid = :id");
+        q.bindValue(":id", task.id);
+        q.bindValue(":name", task.name);
+
+        if (!q.exec()) {
+            qDebug() << "ERR: Query failed\n" << q.lastError();
+            return false;
+        }
+    } else if (index.data(Qt::EditRole).canConvert<Esteem>()) {
+        // Esteem
+
+        Esteem e = qvariant_cast<Esteem>(index.data(Qt::EditRole));
+
+        q.prepare("UPDATE esteems SET esteem = :val, taken = :tkn WHERE task = :t AND person = :p");
+        q.bindValue(":t", task.id);
+        q.bindValue(":p", tasksModel->person(col).id);
+        q.bindValue(":val", e.val);
+        q.bindValue(":tkn", e.tkn);
+
+        if (!q.exec()) {
+            qDebug() << "ERR: Query failed\n" << q.lastError();
+            return false;
+        }
+
+        if (!ui->btnToggleStage->isEnabled())
+            refreshToggleButton();
+    }
+
+    qDebug("Task #%d \"%s\" was changed", task.id, qPrintable(task.name));
+
+    return true;
 }
 
 void MainWindow::closeEvent(QCloseEvent *event)

@@ -36,6 +36,10 @@ private slots:
     void toggleStage();
     void refreshToggleButton();
 
+    bool taskAdded(const QModelIndex &, int row, int);
+    bool taskDeleted(const QModelIndex &, int row, int);
+    bool taskChanged(const QModelIndex &index, const QModelIndex &, const QVector<int> &);
+
 protected:
     void closeEvent(QCloseEvent *event) override;
 };
