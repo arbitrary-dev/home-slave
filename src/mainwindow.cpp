@@ -1,6 +1,5 @@
 #include "mainwindow.h"
 
-#include "tasksmodel.h"
 #include "tasksdelegate.h"
 #include "ui_mainwindow.h"
 
@@ -18,7 +17,9 @@ MainWindow::MainWindow(QWidget *parent) :
 
     QTableView *t = ui->tableView;
 
-    TasksModel *m = new TasksModel;
+    tasksModel = new TasksModel;
+    TasksModel *m = tasksModel;
+
     t->setModel(m);
     t->setShowGrid(false);
     t->setItemDelegate(new TasksDelegate);
@@ -34,13 +35,19 @@ MainWindow::MainWindow(QWidget *parent) :
     // stage toggle button
     QPushButton *bToggle = ui->btnToggleStage;
     connect(bToggle, &QPushButton::clicked, this, &MainWindow::toggleStage);
+
+    // handle rows events
+
     connect(m, &TasksModel::rowsInserted, this, [this] { disableToggleButton(true); });
+
     connect(m, &TasksModel::dataChanged, this,
             [this, bToggle] (const QModelIndex &idx, const QModelIndex  &, const QVector<int> &) {
                 if (    !bToggle->isEnabled()
                         && idx.data(Qt::EditRole).canConvert<Esteem>())
                     refreshToggleButton();
             });
+
+    // refresh view
 
     refreshToggleButton();
     refreshView();
@@ -51,7 +58,7 @@ MainWindow::~MainWindow()
     QTableView *t = ui->tableView;
 
     delete t->itemDelegate();
-    t->setItemDelegate(NULL);
+    t->setItemDelegate(nullptr);
 
     delete ui;
 }

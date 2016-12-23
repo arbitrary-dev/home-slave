@@ -36,26 +36,26 @@ void TasksModel::initData()
 
     while (q.next()) {
         int id = q.value(iid).toInt();
-        QString name = q.value(iname).toString();
-        Task task = { id, name };
-
         Esteems ests;
-        qe.bindValue(":t", task.id);
+
+        QString name = q.value(iname).toString();
+        qe.bindValue(":t", id);
+
         foreach (Person person, vpeople) {
             qe.bindValue(":p", person.id);
             qe.exec();
 
             if (!qe.first()) continue;
 
-            static int ival = qe.record().indexOf("esteem");
-            static int itkn = qe.record().indexOf("taken");
+            int ival = qe.record().indexOf("esteem");
+            int itkn = qe.record().indexOf("taken");
 
             Esteem est = { qe.value(ival).toInt(), qe.value(itkn).toBool() };
-            ests.insert(person, est);
+            ests.insert(person.id, est);
         }
 
-        Row row = { task, ests };
-        vdata.push_back(row);
+        Task task = { id, name, ests };
+        vdata.push_back(task);
     }
 }
 
@@ -131,14 +131,14 @@ QVariant TasksModel::data(const QModelIndex &index, int role) const
     case Qt::DisplayRole:
         if (r < rc - (s_input ? 1 : 0)) {
             if (inEsteems(index)) {
-                Esteem est = vdata[r].esteems[vpeople[c - 1]];
+                Esteem est = vdata[r].esteems[person(c).id];
                 if (est.val == 0)
                     return STR_NO_ESTEEM;
                 return s_input ? QVariant::fromValue(est.val) : est; // esteem
             }
 
             if (c == 0)
-                return vdata[r].task; // task name
+                return vdata[r]; // task name
 
             if (c == cc - 1) {
                 QList<Esteem> es = vdata[r].esteems.values();
@@ -158,7 +158,7 @@ QVariant TasksModel::data(const QModelIndex &index, int role) const
 
     case Qt::EditRole:
         if (r < rc - (s_input ? 1 : 0) && inEsteems(index)) // esteem
-            return vdata[r].esteems[vpeople[c - 1]];
+            return vdata[r].esteems[person(c).id];
 
         break;
 
@@ -194,27 +194,31 @@ bool TasksModel::setData(const QModelIndex &index, const QVariant &value, int ro
 
     int r = index.row();
     int c = index.column();
+    bool s_input = isStage(ST_INPUT_ESTEEMS);
 
     if (inEsteems(index)) {
-        vdata[r].esteems[vpeople[c - 1]] = qvariant_cast<Esteem>(value);
-
+        vdata[r].esteems[person(c).id] = qvariant_cast<Esteem>(value);
         emit dataChanged(index, index);
 
-        // refresh avg. column
-        QModelIndex idx = createIndex(r, columnCount() - 1);
-        emit dataChanged(idx, idx);
+        if (s_input) {
+            // refresh avg. column
+            QModelIndex idx = createIndex(r, columnCount() - 1);
+            emit dataChanged(idx, idx);
+        }
 
         return true;
     }
 
     if (c == 0) {
-        if (isStage(ST_INPUT_ESTEEMS) && r == rowCount() - 1) {
-            QString name = qvariant_cast<QString>(value);
+        QString name = qvariant_cast<QString>(value);
+
+        if (s_input && r == rowCount() - 1) { // add task row
             addTaskRow(index, name);
             return true;
         }
 
-        vdata[r].task.name = qvariant_cast<QString>(value);
+        vdata[r].name = name;
+        emit dataChanged(index, index);
         return true;
     }
 
@@ -229,9 +233,8 @@ void TasksModel::addTaskRow(const QModelIndex &index, const QString &name)
     int r = index.row();
     emit beginInsertRows(index.parent(), r, r);
 
-    Task task = { -1, name };
-    Row row = { task, Esteems() };
-    vdata.append(row);
+    Task task = { -1, name, Esteems() };
+    vdata.append(task);
 
     emit endInsertRows();
 }
@@ -250,7 +253,7 @@ QVariant TasksModel::headerData(int section, Qt::Orientation orientation, int ro
         if (section == columnCount() - 1)
             return tr("Avg.");
 
-        return vpeople[section - 1];
+        return person(section);
 
     case Qt::SizeHintRole:
         if (section > 0 && o_horz)
@@ -269,4 +272,24 @@ QVariant TasksModel::headerData(int section, Qt::Orientation orientation, int ro
 void TasksModel::toggleStage()
 {
     currStage = isStage(ST_INPUT_ESTEEMS) ? ST_TAKE_TASKS : ST_INPUT_ESTEEMS;
+}
+
+Task &TasksModel::task(int row)
+{
+    return vdata[row];
+}
+
+const Task &TasksModel::task(int row) const
+{
+    return vdata[row];
+}
+
+Person &TasksModel::person(int col)
+{
+    return vpeople[col - 1];
+}
+
+const Person &TasksModel::person(int col) const
+{
+    return vpeople[col - 1];
 }

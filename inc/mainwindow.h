@@ -4,6 +4,8 @@
 #include <QMainWindow>
 #include <QtSql>
 
+#include "tasksmodel.h"
+
 namespace Ui {
 class MainWindow;
 }
@@ -22,6 +24,7 @@ public:
 
 private:
     Ui::MainWindow *ui;
+    TasksModel *tasksModel;
 
     void refreshView();
     void disableToggleButton(bool disable);

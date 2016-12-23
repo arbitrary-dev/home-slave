@@ -3,15 +3,9 @@
 
 #include <QtSql>
 
+typedef int PersonId;
 struct Person {
-    int id;
-    QString name;
-
-    operator QVariant() const { return name; }
-};
-
-struct Task {
-    int id;
+    PersonId id;
     QString name;
 
     operator QVariant() const { return name; }
@@ -26,12 +20,15 @@ struct Esteem {
 
 Q_DECLARE_METATYPE(Esteem)
 
-typedef QHash<Person, Esteem> Esteems;
+typedef QHash<PersonId, Esteem> Esteems;
 
-// TODO replace with Task
-struct Row {
-    Task task;
+typedef int TaskId;
+struct Task {
+    TaskId id;
+    QString name;
     Esteems esteems;
+
+    operator QVariant() const { return name; }
 };
 
 class TasksModel : public QAbstractTableModel
@@ -61,11 +58,17 @@ public:
     void toggleStage();
     bool isStage(Stage stage) const { return currStage == stage; }
 
+    Task &task(int row);
+    const Task &task(int row) const;
+
+    Person &person(int col);
+    const Person &person(int col) const;
+
 private:
     Stage currStage = ST_INPUT_ESTEEMS;
 
     QVector<Person> vpeople; // TODO rfct to QHash<int, Person>
-    QVector<Row> vdata;
+    QVector<Task> vdata;
 
     void initPeople();
     void initData();
