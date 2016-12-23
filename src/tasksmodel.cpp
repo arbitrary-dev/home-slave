@@ -209,6 +209,8 @@ bool TasksModel::setData(const QModelIndex &index, const QVariant &value, int ro
             // refresh avg. column
             QModelIndex idx = createIndex(r, columnCount() - 1);
             emit dataChanged(idx, idx);
+        } else {
+            // TODO update statusbar on current work distribution
         }
 
         return true;
@@ -258,6 +260,7 @@ void TasksModel::delTaskRow(const QModelIndex &index)
 }
 
 // TODO test
+// TODO context menu to add, rename and delete people
 QVariant TasksModel::headerData(int section, Qt::Orientation orientation, int role) const
 {
     bool o_horz = orientation == Qt::Horizontal;

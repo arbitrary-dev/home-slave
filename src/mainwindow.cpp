@@ -53,6 +53,9 @@ MainWindow::MainWindow(QWidget *parent) :
 
     refreshToggleButton();
     refreshView();
+
+    // TODO send welcome! to statusbar
+    // TODO columns sorting
 }
 
 MainWindow::~MainWindow()
