@@ -40,6 +40,9 @@ MainWindow::MainWindow(QWidget *parent) :
 
     connect(m, &TasksModel::rowsInserted, this, [this] { disableToggleButton(true); });
 
+    connect(m, &TasksModel::rowsRemoved, this,
+            [this, bToggle] { if (!bToggle->isEnabled()) refreshToggleButton(); });
+
     connect(m, &TasksModel::dataChanged, this,
             [this, bToggle] (const QModelIndex &idx, const QModelIndex  &, const QVector<int> &) {
                 if (    !bToggle->isEnabled()

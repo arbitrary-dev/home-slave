@@ -74,6 +74,7 @@ private:
     void initData();
 
     void addTaskRow(const QModelIndex &index, const QString &name);
+    void delTaskRow(const QModelIndex &index);
 
     inline bool inEsteems(const QModelIndex &index) const;
     inline double calcAvgEsteem(const QList<Esteem> &es) const;

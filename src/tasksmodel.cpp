@@ -222,6 +222,11 @@ bool TasksModel::setData(const QModelIndex &index, const QVariant &value, int ro
             return true;
         }
 
+        if (name.trimmed().isEmpty()) { // delete task row, if task name was erased
+            delTaskRow(index);
+            return true;
+        }
+
         vdata[r].name = name;
         emit dataChanged(index, index);
         return true;
@@ -242,6 +247,14 @@ void TasksModel::addTaskRow(const QModelIndex &index, const QString &name)
     vdata.append(task);
 
     emit endInsertRows();
+}
+
+void TasksModel::delTaskRow(const QModelIndex &index)
+{
+    int r = index.row();
+    emit beginRemoveRows(index.parent(), r, r);
+    vdata.removeAt(r);
+    emit endRemoveRows();
 }
 
 // TODO test
