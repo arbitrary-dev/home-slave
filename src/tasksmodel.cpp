@@ -202,7 +202,13 @@ bool TasksModel::setData(const QModelIndex &index, const QVariant &value, int ro
     bool s_input = isStage(ST_INPUT_ESTEEMS);
 
     if (inEsteems(index)) {
-        vdata[r].esteems[person(c).id] = qvariant_cast<Esteem>(value);
+        Esteem val = qvariant_cast<Esteem>(value);
+        Esteem &est = vdata[r].esteems[person(c).id];
+
+        if (est == val) // no need for update
+            return true;
+
+        est = val;
         emit dataChanged(index, index);
 
         if (s_input) {
@@ -224,12 +230,17 @@ bool TasksModel::setData(const QModelIndex &index, const QVariant &value, int ro
             return true;
         }
 
-        if (name.trimmed().isEmpty()) { // delete task row, if task name was erased
+        QString tname = name.trimmed();
+
+        if (tname.isEmpty()) { // delete task row, if task name was erased
             delTaskRow(index);
             return true;
         }
 
-        vdata[r].name = name;
+        if (vdata[r].name.trimmed() == tname) // no need for update
+            return true;
+
+        vdata[r].name = tname;
         emit dataChanged(index, index);
         return true;
     }

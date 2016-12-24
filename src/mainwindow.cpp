@@ -114,6 +114,7 @@ bool MainWindow::taskAdded(const QModelIndex &, int row, int)
 {
     Task &task = tasksModel->task(row);
 
+    QSqlDatabase::database().transaction(); // start one if not already
     QSqlQuery q;
     q.prepare("INSERT INTO tasks (name) VALUES (:name)");
     q.bindValue(":name", task.name);
@@ -170,12 +171,21 @@ bool MainWindow::taskDeleted(const QModelIndex &, int row, int)
 
 bool MainWindow::taskChanged(const QModelIndex &index, const QModelIndex &, const QVector<int> &)
 {
-    int col = index.column();
-    int row = index.row();
-    Task &task = tasksModel->task(row);
+    bool res = false;
+    int c = index.column();
+    int r = index.row();
+    int rc = tasksModel->rowCount();
+
+    // Check if row is valid
+    if ((tasksModel->isStage(TasksModel::ST_INPUT_ESTEEMS) && r == rc - 1) || r < 0 || r >= rc)
+        return false;
+
+    Task &task = tasksModel->task(r);
+
+    QSqlDatabase::database().transaction(); // start one if not already
     QSqlQuery q;
 
-    if (col == 0) {
+    if (c == 0) {
         // Task name
 
         q.prepare("UPDATE tasks SET name = :name WHERE rowid = :id");
@@ -186,6 +196,8 @@ bool MainWindow::taskChanged(const QModelIndex &index, const QModelIndex &, cons
             qDebug() << "ERR: Query failed\n" << q.lastError();
             return false;
         }
+
+        res = true;
     } else if (index.data(Qt::EditRole).canConvert<Esteem>()) {
         // Esteem
 
@@ -193,7 +205,7 @@ bool MainWindow::taskChanged(const QModelIndex &index, const QModelIndex &, cons
 
         q.prepare("UPDATE esteems SET esteem = :val, taken = :tkn WHERE task = :t AND person = :p");
         q.bindValue(":t", task.id);
-        q.bindValue(":p", tasksModel->person(col).id);
+        q.bindValue(":p", tasksModel->person(c).id);
         q.bindValue(":val", e.val);
         q.bindValue(":tkn", e.tkn);
 
@@ -204,15 +216,26 @@ bool MainWindow::taskChanged(const QModelIndex &index, const QModelIndex &, cons
 
         if (!ui->btnToggleStage->isEnabled())
             refreshToggleButton();
+
+        res = true;
     }
 
-    qDebug("Task #%d \"%s\" was changed", task.id, qPrintable(task.name));
+    if (res) qDebug("Task #%d \"%s\" was changed", task.id, qPrintable(task.name));
 
-    return true;
+    return res;
 }
 
 void MainWindow::closeEvent(QCloseEvent *event)
 {
+    QSqlDatabase db = QSqlDatabase::database();
+    if (db.transaction()) {
+        // If can acquire transaction, then it wasn't started before, so no changes to persist.
+        db.rollback();
+        db.close();
+        event->accept();
+        return;
+    }
+
     using Btn = QMessageBox::StandardButton;
 
     Btn res = QMessageBox::question(
@@ -226,10 +249,11 @@ void MainWindow::closeEvent(QCloseEvent *event)
         break;
 
     case Btn::Yes:
-        QSqlDatabase::database().commit();
+        db.commit();
         // fall-through
     case Btn::No:
     default:
+        db.close();
         event->accept();
         break;
     }
@@ -257,7 +281,7 @@ void MainWindow::refreshView()
     int rc = m->rowCount();
     int cc = m->columnCount();
 
-    // Make checkboxes persistent.
+    // Make checkboxes persistent
     for (int r = 0; r < rc; ++r)
         for (int c = 0; c < cc; ++c)
         {
@@ -266,18 +290,18 @@ void MainWindow::refreshView()
                 (t->*peFunc)(i);
         }
 
-    // Merge cols in an input new task row.
-    if (s_input)
+    if (s_input) {
+        // Merge cols in an input new task row
         t->setSpan(rc - 1, 0, 1, cc);
+    } else {
+        // Make it disappear
+        QModelIndex i = m->index(-1, -1);
+        emit m->dataChanged(i, i);
+    }
 
     // Stage toggle button text update.
     QPushButton *bToggle = ui->btnToggleStage;
     bToggle->setText(tr(s_input ? STR_TAKE_TASKS : STR_INPUT_ESTEEMS));
-
-    // refresh
-    QModelIndex start = m->index(0, 0);
-    QModelIndex end = m->index(rc, cc);
-    emit m->dataChanged(start, end);
 }
 
 int MainWindow::colWidth(const QAbstractTableModel *m, int col)

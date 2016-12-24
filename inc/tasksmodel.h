@@ -11,12 +11,24 @@ struct Person {
     operator QVariant() const { return name; }
 };
 
+inline bool operator ==(const Person &a, const Person &b) {
+    return a.id == b.id;
+}
+
+inline uint qHash(const Person &p, uint seed) {
+    return qHash(p.id, seed);
+}
+
 struct Esteem {
     int val;
     bool tkn; // taken
 
     operator QVariant() const { return QVariant::fromValue(*this); }
 };
+
+inline bool operator ==(const Esteem &a, const Esteem &b) {
+    return a.val == b.val && a.tkn == b.tkn;
+}
 
 Q_DECLARE_METATYPE(Esteem)
 
@@ -79,13 +91,5 @@ private:
     inline bool inEsteems(const QModelIndex &index) const;
     inline double calcAvgEsteem(const QList<Esteem> &es) const;
 };
-
-inline bool operator ==(const Person &a, const Person &b) {
-    return a.id == b.id;
-}
-
-inline uint qHash(const Person &p, uint seed) {
-    return qHash(p.id, seed);
-}
 
 #endif // TASKSMODEL_H

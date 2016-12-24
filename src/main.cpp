@@ -28,7 +28,6 @@ void initDb()
         return;
     }
 
-    db.transaction(); // app-wide transaction which should be commited on request
     QSqlQuery q;
 
     int p = -1, t = -1;
