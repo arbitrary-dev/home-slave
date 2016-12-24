@@ -19,6 +19,9 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->setupUi(this);
 
     QTableView *t = ui->tableView;
+    // TODO summary row for total load (overloads are red-highlighted)
+    // https://goo.gl/cjpvEC
+    // QAbstractScrollArea::setViewportMargins()
 
     tasksModel = new TasksModel;
     TasksModel *m = tasksModel;
@@ -48,6 +51,7 @@ MainWindow::MainWindow(QWidget *parent) :
             [this, bToggle] { if (!bToggle->isEnabled()) refreshToggleButton(); });
 
     connect(m, &TasksModel::dataChanged, this, &MainWindow::taskChanged);
+    // TODO update statusbar on current work distribution
 
     // refresh view
 
@@ -129,6 +133,7 @@ bool MainWindow::taskAdded(const QModelIndex &, int row, int)
     int rowid = q.value(0).toInt();
     task.id = rowid;
 
+    // TODO convert to statusbar update
     qDebug("Task #%d \"%s\" was inserted", rowid, qPrintable(task.name));
 
     // Add esteems associated with task
@@ -185,6 +190,7 @@ bool MainWindow::taskDeleted(const QModelIndex &, int row, int)
         return false;
     }
 
+    // TODO convert to statusbar update
     qDebug("Task #%d \"%s\" was deleted", task.id, qPrintable(task.name));
 
     return true;
@@ -241,6 +247,7 @@ bool MainWindow::taskChanged(const QModelIndex &index, const QModelIndex &, cons
         res = true;
     }
 
+    // TODO convert to statusbar update
     if (res) qDebug("Task #%d \"%s\" was changed", task.id, qPrintable(task.name));
 
     return res;

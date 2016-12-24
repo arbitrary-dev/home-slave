@@ -215,8 +215,6 @@ bool TasksModel::setData(const QModelIndex &index, const QVariant &value, int ro
             // refresh avg. column
             QModelIndex idx = createIndex(r, columnCount() - 1);
             emit dataChanged(idx, idx);
-        } else {
-            // TODO update statusbar on current work distribution
         }
 
         return true;
