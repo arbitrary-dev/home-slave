@@ -162,7 +162,28 @@ bool MainWindow::taskDeleted(const QModelIndex &, int row, int)
 {
     Task &task = tasksModel->task(row);
 
-    // TODO taskDeleted
+    QSqlDatabase::database().transaction(); // start one if not already
+    QSqlQuery q;
+
+    // Delete esteems associated with task
+
+    q.prepare("DELETE FROM esteems WHERE task = :t");
+    q.bindValue(":t", task.id);
+
+    if (!q.exec()) {
+        qDebug("ERR: \"%s\" failed\n%s", qPrintable(q.executedQuery()), qPrintable(q.lastError().text()));
+        return false;
+    }
+
+    // Delete the task itself
+
+    q.prepare("DELETE FROM tasks WHERE rowid = :id");
+    q.bindValue(":id", task.id);
+
+    if (!q.exec()) {
+        qDebug("ERR: \"%s\" failed\n%s", qPrintable(q.executedQuery()), qPrintable(q.lastError().text()));
+        return false;
+    }
 
     qDebug("Task #%d \"%s\" was deleted", task.id, qPrintable(task.name));
 
