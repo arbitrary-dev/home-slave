@@ -234,7 +234,7 @@ bool MainWindow::taskChanged(const QModelIndex &index, const QModelIndex &, cons
 
         Esteem e = qvariant_cast<Esteem>(index.data(Qt::EditRole));
 
-        q.prepare("UPDATE esteems SET esteem = :val, taken = :tkn WHERE task = :t AND person = :p");
+        q.prepare("REPLACE INTO esteems (task, person, esteem, taken) VALUES (:t, :p, :val, :tkn)");
         q.bindValue(":t", task.id);
         q.bindValue(":p", tasksModel->person(c).id);
         q.bindValue(":val", e.val);
