@@ -21,7 +21,6 @@ MainWindow::MainWindow(QWidget *parent) :
     // TODO remove left border from table viewport
     // TODO shade even rows
     QTableView *t = ui->tableView;
-    // TODO ! summary row for total load (overloads are red-highlighted)
     // TODO ! separator between data & summary row
     // TODO ! locked summary row
     // https://goo.gl/sQe84X
@@ -209,7 +208,7 @@ bool MainWindow::taskChanged(const QModelIndex &index, const QModelIndex &, cons
     int rc = tasksModel->rowCount();
 
     // Check if row is valid
-    if ((tasksModel->isStage(TasksModel::ST_INPUT_ESTEEMS) && r == rc - 1) || r < 0 || r >= rc)
+    if (r == rc - 1)
         return false;
 
     Task &task = tasksModel->task(r);
@@ -323,14 +322,8 @@ void MainWindow::refreshView()
                 (t->*peFunc)(i);
         }
 
-    if (s_input) {
-        // Merge cols in an input new task row
-        t->setSpan(rc - 1, 0, 1, cc);
-    } else {
-        // Make it disappear
-        QModelIndex i = m->index(-1, -1);
-        emit m->dataChanged(i, i);
-    }
+    // Merge cols in an input new task row
+    t->setSpan(rc - 1, 0, 1, s_input ? cc : 1);
 
     // Stage toggle button text update.
     QPushButton *bToggle = ui->btnToggleStage;

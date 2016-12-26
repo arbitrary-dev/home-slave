@@ -8,6 +8,9 @@ struct Person {
     PersonId id;
     QString name;
 
+    double load;
+    bool overload;
+
     operator QVariant() const { return name; }
 };
 
@@ -50,6 +53,7 @@ class TasksModel : public QAbstractTableModel
 public:
     static const char *STR_NO_ESTEEM;
     static const char *STR_INS_NEW_TASK;
+    static const char *STR_TOTAL;
 
     enum Stage {
         ST_INPUT_ESTEEMS,
@@ -84,6 +88,7 @@ private:
 
     void initPeople();
     void initData();
+    void updateSummary();
 
     void addTaskRow(const QModelIndex &index, const QString &name);
     void delTaskRow(const QModelIndex &index);

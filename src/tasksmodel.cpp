@@ -19,7 +19,7 @@ void TasksModel::initPeople()
     while (q.next()) {
         int id = q.value(iid).toInt();
         QString name = q.value(iname).toString();
-        Person person = { id, name };
+        Person person = { id, name, 0.0, false };
         vpeople.push_back(person);
     }
 }
@@ -57,6 +57,55 @@ void TasksModel::initData()
         Task task = { id, name, ests };
         vdata.push_back(task);
     }
+
+    updateSummary();
+}
+
+void TasksModel::updateSummary()
+{
+    // reset
+    for (auto &p : vpeople) {
+        p.load = 0.0;
+        p.overload = false;
+    }
+
+    for (const auto &t : vdata) { // tasks
+        int c = 0; // people counter, who took task
+        double w = 0; // total estimated work
+        Esteems es = t.esteems;
+
+        for (const auto &p : vpeople) {
+            Esteem e = es[p.id];
+            if (e.tkn) ++c;
+            w += e.val;
+        }
+
+        w /= vpeople.size(); // avg. work
+
+        if (c > 0) // someone took task
+            for (auto &p : vpeople)
+                if (es[p.id].tkn)
+                    p.load += w / c; // update person load
+    }
+
+    static auto cmp = [](const Person &a, const Person &b) { return a.load > b.load; };
+
+    QVector<Person> sorted = vpeople;
+    std::sort(sorted.begin(), sorted.end(), cmp);
+
+    if (cmp(*sorted.cbegin(), *(sorted.cend() - 1))) {
+        // Someone is overloaded
+        Person *pp = sorted.begin(); // take first overloaded
+        std::for_each(vpeople.begin(), vpeople.end(),
+                      [&pp](Person &p) {
+                          if (p.load == pp->load) // find others in original vector
+                              p.overload = true;
+                      });
+    }
+
+    QModelIndex start = index(rowCount() - 1, 0);
+    QModelIndex end = index(rowCount() - 1, columnCount() - 1);
+    emit dataChanged(start, end);
 }
 
 int TasksModel::rowCount(const QModelIndex &parent) const
@@ -64,10 +113,8 @@ int TasksModel::rowCount(const QModelIndex &parent) const
     if (parent.isValid())
         return 0;
 
-    bool s_input = isStage(ST_INPUT_ESTEEMS);
-
     return vdata.size()
-           + (s_input ? 1 : 0); // new task row
+           + 1; // insert new task or summary row
 }
 
 int TasksModel::columnCount(const QModelIndex &parent) const
@@ -93,7 +140,7 @@ Qt::ItemFlags TasksModel::flags(const QModelIndex &index) const
 
 inline bool TasksModel::inEsteems(const QModelIndex &index) const
 {
-    return (isStage(ST_TAKE_TASKS) || index.row() < rowCount() - 1)
+    return index.row() < rowCount() - 1
            && index.column() > 0
            && index.column() < columnCount() - 1;
 }
@@ -114,6 +161,7 @@ double TasksModel::calcAvgEsteem(const QList<Esteem> &es) const
 
 const char *TasksModel::STR_NO_ESTEEM = "--";
 const char *TasksModel::STR_INS_NEW_TASK = "insert new task...";
+const char *TasksModel::STR_TOTAL = "Total:";
 
 // TODO test
 QVariant TasksModel::data(const QModelIndex &index, int role) const
@@ -129,7 +177,7 @@ QVariant TasksModel::data(const QModelIndex &index, int role) const
 
     switch (role) {
     case Qt::DisplayRole:
-        if (r < rc - (s_input ? 1 : 0)) {
+        if (r < rc - 1) {
             if (inEsteems(index)) {
                 Esteem est = vdata[r].esteems[person(c).id];
                 if (est.val == 0)
@@ -151,13 +199,23 @@ QVariant TasksModel::data(const QModelIndex &index, int role) const
             }
         }
 
-        if (s_input && r == rc - 1)
-            return tr(STR_INS_NEW_TASK); // insert new task row
+        if (r == rc - 1) {
+            if (s_input) {
+                // insert new task row
+                return tr(STR_INS_NEW_TASK);
+            } else {
+                // summary row
+                if (c == 0)
+                    return tr(STR_TOTAL);
+                else if (c < cc - 1)
+                    return QString::number(vpeople[c - 1].load, 'f', 2);
+            }
+        }
 
         break;
 
     case Qt::EditRole:
-        if (r < rc - (s_input ? 1 : 0)) {
+        if (r < rc - 1) {
             if (c == 0)
                 return vdata[r]; // task name
 
@@ -168,23 +226,30 @@ QVariant TasksModel::data(const QModelIndex &index, int role) const
         break;
 
     case Qt::TextAlignmentRole:
-        if (r < rc - (s_input ? 1 : 0) && (inEsteems(index) || c == cc - 1)) // esteem & avg
+        if (    inEsteems(index)        // esteems
+                || c == cc - 1          // avg. column
+                || (!s_input && c > 0)) // summary row
             return Qt::AlignCenter;
 
         break;
 
     case Qt::FontRole:
-        if (s_input && r == rc - 1) { // insert new task row
+        if (r == rc - 1 && c == 0) {
             QFont f;
-            f.setItalic(true);
+            if (s_input) f.setItalic(true); // insert new task row
+            else         f.setBold(true);   // summary row
             return f;
         }
 
         break;
 
     case Qt::ForegroundRole:
-        if (s_input && r == rc - 1)
-            return QColor(Qt::lightGray); // insert new task row
+        if (r == rc - 1) {
+            if (s_input)
+                return QColor(Qt::lightGray); // insert new task row
+            else if (c > 0 && c < cc - 1 && vpeople[c - 1].overload)
+                return QColor(Qt::red); // overloaded people are red-highlighted
+        }
 
         break;
     }
@@ -215,6 +280,8 @@ bool TasksModel::setData(const QModelIndex &index, const QVariant &value, int ro
             // refresh avg. column
             QModelIndex idx = createIndex(r, columnCount() - 1);
             emit dataChanged(idx, idx);
+        } else {
+            updateSummary();
         }
 
         return true;
