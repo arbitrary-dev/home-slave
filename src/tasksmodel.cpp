@@ -282,9 +282,9 @@ bool TasksModel::setData(const QModelIndex &index, const QVariant &value, int ro
             // refresh avg. column
             QModelIndex idx = createIndex(r, columnCount() - 1);
             emit dataChanged(idx, idx);
-        } else {
-            updateSummary();
         }
+
+        updateSummary();
 
         return true;
     }
@@ -327,6 +327,9 @@ void TasksModel::addTaskRow(const QModelIndex &index, const QString &name)
     vdata.append(task);
 
     emit endInsertRows();
+
+    // there are no esteems in new task
+    // updateSummary();
 }
 
 void TasksModel::delTaskRow(const QModelIndex &index)
@@ -335,6 +338,8 @@ void TasksModel::delTaskRow(const QModelIndex &index)
     emit beginRemoveRows(index.parent(), r, r);
     vdata.removeAt(r);
     emit endRemoveRows();
+
+    updateSummary();
 }
 
 // TODO test
