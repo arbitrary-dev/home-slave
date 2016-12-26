@@ -145,7 +145,7 @@ bool MainWindow::taskAdded(const QModelIndex &, int row, int)
     q.prepare("INSERT INTO esteems (task, person, esteem, taken) VALUES (:t, :p, :val, :tkn)");
     q.bindValue(":t", task.id);
 
-    QHashIterator<PersonId, Esteem> i(task.esteems);
+    QHashIterator<Person, Esteem> i(task.esteems);
     while (i.hasNext()) {
         i.next();
         q.bindValue(":p", i.key());

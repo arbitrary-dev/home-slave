@@ -41,7 +41,7 @@ void TasksModel::initData()
         QString name = q.value(iname).toString();
         qe.bindValue(":t", id);
 
-        foreach (Person person, vpeople) {
+        for (const auto &person : vpeople) {
             qe.bindValue(":p", person.id);
             qe.exec();
 
@@ -51,7 +51,7 @@ void TasksModel::initData()
             int itkn = qe.record().indexOf("taken");
 
             Esteem est = { qe.value(ival).toInt(), qe.value(itkn).toBool() };
-            ests.insert(person.id, est);
+            ests.insert(person, est);
         }
 
         Task task = { id, name, ests };
@@ -69,23 +69,22 @@ void TasksModel::updateSummary()
         p.overload = false;
     }
 
-    for (const auto &t : vdata) { // tasks
+    for (const auto &task : vdata) {
         int c = 0; // people counter, who took task
         double w = 0; // total estimated work
-        Esteems es = t.esteems;
 
-        for (const auto &p : vpeople) {
-            Esteem e = es[p.id];
-            if (e.tkn) ++c;
-            w += e.val;
+        for (const auto &person : vpeople) {
+            Esteem esteem = task.esteems[person];
+            if (esteem.tkn) ++c;
+            w += esteem.val;
         }
 
         w /= vpeople.size(); // avg. work
 
         if (c > 0) // someone took task
-            for (auto &p : vpeople)
-                if (es[p.id].tkn)
-                    p.load += w / c; // update person load
+            for (auto &person : vpeople)
+                if (task.esteems[person].tkn)
+                    person.load += w / c; // update person load
     }
 
     static auto cmp = [](const Person &a, const Person &b) { return a.load > b.load; };
@@ -164,6 +163,7 @@ const char *TasksModel::STR_INS_NEW_TASK = "insert new task...";
 const char *TasksModel::STR_TOTAL = "Total:";
 
 // TODO test
+// TODO task name in one line, strip it with ellipsis
 QVariant TasksModel::data(const QModelIndex &index, int role) const
 {
     if (!index.isValid())
@@ -179,10 +179,10 @@ QVariant TasksModel::data(const QModelIndex &index, int role) const
     case Qt::DisplayRole:
         if (r < rc - 1) {
             if (inEsteems(index)) {
-                Esteem est = vdata[r].esteems[person(c).id];
-                if (est.val == 0)
+                Esteem esteem = vdata[r].esteems[person(c)];
+                if (esteem.val == 0)
                     return STR_NO_ESTEEM;
-                return s_input ? QVariant::fromValue(est.val) : est; // esteem
+                return s_input ? QVariant::fromValue(esteem.val) : esteem; // esteem
             }
 
             if (c == 0)
@@ -208,7 +208,7 @@ QVariant TasksModel::data(const QModelIndex &index, int role) const
                 if (c == 0)
                     return tr(STR_TOTAL);
                 else if (c < cc - 1)
-                    return QString::number(vpeople[c - 1].load, 'f', 2);
+                    return QString::number(person(c).load, 'f', 2);
             }
         }
 
@@ -217,10 +217,12 @@ QVariant TasksModel::data(const QModelIndex &index, int role) const
     case Qt::EditRole:
         if (r < rc - 1) {
             if (c == 0)
-                return vdata[r]; // task name
+                // task name
+                return vdata[r];
 
-            if (inEsteems(index)) // esteem
-                return vdata[r].esteems[person(c).id];
+            if (inEsteems(index))
+                // esteem
+                return vdata[r].esteems[person(c)];
         }
 
         break;
@@ -247,7 +249,7 @@ QVariant TasksModel::data(const QModelIndex &index, int role) const
         if (r == rc - 1) {
             if (s_input)
                 return QColor(Qt::lightGray); // insert new task row
-            else if (c > 0 && c < cc - 1 && vpeople[c - 1].overload)
+            else if (c > 0 && c < cc - 1 && person(c).overload)
                 return QColor(Qt::red); // overloaded people are red-highlighted
         }
 
@@ -267,13 +269,13 @@ bool TasksModel::setData(const QModelIndex &index, const QVariant &value, int ro
     bool s_input = isStage(ST_INPUT_ESTEEMS);
 
     if (inEsteems(index)) {
-        Esteem val = qvariant_cast<Esteem>(value);
-        Esteem &est = vdata[r].esteems[person(c).id];
+        Esteem next = qvariant_cast<Esteem>(value);
+        Esteem &curr = vdata[r].esteems[person(c)];
 
-        if (est == val) // no need for update
+        if (curr == next) // no need for update
             return true;
 
-        est = val;
+        curr = next;
         emit dataChanged(index, index);
 
         if (s_input) {
@@ -373,7 +375,7 @@ void TasksModel::toggleStage()
 
 Task &TasksModel::task(int row)
 {
-    return vdata[row];
+    return const_cast<Task &>(static_cast<const TasksModel &>(*this).task(row));
 }
 
 const Task &TasksModel::task(int row) const
@@ -383,7 +385,7 @@ const Task &TasksModel::task(int row) const
 
 Person &TasksModel::person(int col)
 {
-    return vpeople[col - 1];
+    return const_cast<Person &>(static_cast<const TasksModel &>(*this).person(col));
 }
 
 const Person &TasksModel::person(int col) const
