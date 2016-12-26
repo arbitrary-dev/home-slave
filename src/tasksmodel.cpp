@@ -9,7 +9,7 @@ TasksModel::TasksModel(QObject *parent)
     initData();
 }
 
-// TODO rfct to setPeople(QList<Person>)
+// TODO !! rfct to TasksTableView::initPeople(QList<Person>)
 void TasksModel::initPeople()
 {
     QSqlQuery q("SELECT rowid, name FROM people");
@@ -24,7 +24,7 @@ void TasksModel::initPeople()
     }
 }
 
-// TODO rfct to setData(QList<Task>)
+// TODO !! rfct out to TasksTableView::initData(QList<Task>)
 void TasksModel::initData()
 {
     QSqlQuery q("SELECT rowid, name FROM tasks ORDER BY name");
@@ -269,7 +269,7 @@ void TasksModel::delTaskRow(const QModelIndex &index)
 }
 
 // TODO test
-// TODO context menu to add, rename and delete people
+// TODO !!! context menu to add, rename and delete people
 QVariant TasksModel::headerData(int section, Qt::Orientation orientation, int role) const
 {
     bool o_horz = orientation == Qt::Horizontal;

@@ -18,8 +18,13 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     ui->setupUi(this);
 
+    // TODO remove left border from table viewport
+    // TODO shade even rows
     QTableView *t = ui->tableView;
-    // TODO summary row for total load (overloads are red-highlighted)
+    // TODO ! summary row for total load (overloads are red-highlighted)
+    // TODO ! separator between data & summary row
+    // TODO ! locked summary row
+    // https://goo.gl/sQe84X
     // https://goo.gl/cjpvEC
     // QAbstractScrollArea::setViewportMargins()
 
@@ -51,14 +56,14 @@ MainWindow::MainWindow(QWidget *parent) :
             [this, bToggle] { if (!bToggle->isEnabled()) refreshToggleButton(); });
 
     connect(m, &TasksModel::dataChanged, this, &MainWindow::taskChanged);
-    // TODO update statusbar on current work distribution
+    // TODO ! update statusbar on current work distribution
 
     // refresh view
 
     refreshToggleButton();
     refreshView();
 
-    // TODO send welcome! to statusbar
+    // TODO ! send welcome! to statusbar
     // TODO columns sorting
 }
 
@@ -268,7 +273,7 @@ void MainWindow::closeEvent(QCloseEvent *event)
 
     Btn res = QMessageBox::question(
         this, QCoreApplication::applicationName(),
-        tr(STR_PERST_CHANGES).arg("tasks.db"), // TODO replace tasks.db with variable
+        tr(STR_PERST_CHANGES).arg("tasks.db"), // TODO !! replace tasks.db with variable
         Btn::Yes | Btn::No | Btn::Cancel);
 
     switch (res) {

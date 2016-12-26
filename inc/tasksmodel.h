@@ -32,7 +32,7 @@ inline bool operator ==(const Esteem &a, const Esteem &b) {
 
 Q_DECLARE_METATYPE(Esteem)
 
-typedef QHash<PersonId, Esteem> Esteems;
+typedef QHash<PersonId, Esteem> Esteems; // WARN why PersonId instead of just Person?
 
 typedef int TaskId;
 struct Task {
@@ -79,7 +79,7 @@ public:
 private:
     Stage currStage = ST_INPUT_ESTEEMS;
 
-    QVector<Person> vpeople; // TODO rfct to QHash<int, Person>
+    QVector<Person> vpeople; // TODO !! rfct to QHash<int, Person> (warum?)
     QVector<Task> vdata;
 
     void initPeople();
