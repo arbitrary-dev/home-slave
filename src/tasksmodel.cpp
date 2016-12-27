@@ -162,6 +162,9 @@ const char *TasksModel::STR_NO_ESTEEM = "--";
 const char *TasksModel::STR_INS_NEW_TASK = "insert new task...";
 const char *TasksModel::STR_TOTAL = "Total:";
 
+const char *TasksModel::STR_TAKEN = "taken";
+const char *TasksModel::STR_NOT_TAKEN = "not taken";
+
 // TODO test
 // TODO task name in one line, strip it with ellipsis
 QVariant TasksModel::data(const QModelIndex &index, int role) const
@@ -223,6 +226,15 @@ QVariant TasksModel::data(const QModelIndex &index, int role) const
             if (inEsteems(index))
                 // esteem
                 return vdata[r].esteems[person(c)];
+        }
+
+        break;
+
+    case Qt::ToolTipRole:
+        if (r < rc - 1 && inEsteems(index)) {
+            // esteem
+            Esteem e = vdata[r].esteems[person(c)];
+            return s_input ? tr(e.tkn ? STR_TAKEN : STR_NOT_TAKEN) : QString::number(e.val);
         }
 
         break;

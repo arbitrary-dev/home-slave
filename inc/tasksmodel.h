@@ -55,6 +55,9 @@ public:
     static const char *STR_INS_NEW_TASK;
     static const char *STR_TOTAL;
 
+    static const char *STR_TAKEN;
+    static const char *STR_NOT_TAKEN;
+
     enum Stage {
         ST_INPUT_ESTEEMS,
         ST_TAKE_TASKS

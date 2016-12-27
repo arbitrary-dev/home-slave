@@ -6,6 +6,7 @@
 #include <QComboBox>
 #include <QMouseEvent>
 
+// FIXME widgets lose focus during [Win+Space] language switch
 QWidget *TasksDelegate::createEditor(QWidget *parent, const QStyleOptionViewItem &option,
                                         const QModelIndex &index) const
 {
@@ -38,13 +39,16 @@ void TasksDelegate::setEditorData(QWidget *editor, const QModelIndex &index) con
     }
 
     Esteem est = esteem(index);
+    QString toolTip = qvariant_cast<QString>(index.data(Qt::ToolTipRole));
 
     if (isStage(index, TasksModel::ST_INPUT_ESTEEMS)) {
-        QComboBox *e = find<QComboBox>(editor);
-        e->setCurrentIndex(est.val - 1);
+        QComboBox *cmb = find<QComboBox>(editor);
+        cmb->setToolTip(toolTip);
+        cmb->setCurrentIndex(est.val - 1);
     } else {
-        QCheckBox *e = find<QCheckBox>(editor);
-        e->setChecked(est.tkn);
+        QCheckBox *cb = find<QCheckBox>(editor);
+        cb->setToolTip(toolTip);
+        cb->setChecked(est.tkn);
     }
 }
 

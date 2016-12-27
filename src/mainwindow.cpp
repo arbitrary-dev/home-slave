@@ -82,6 +82,7 @@ void MainWindow::toggleStage()
     TasksModel *m = dynamic_cast<TasksModel*>(t->model());
 
     m->toggleStage();
+    // TODO persist toggle state
     refreshView();
 }
 
