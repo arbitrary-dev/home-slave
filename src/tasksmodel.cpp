@@ -263,6 +263,9 @@ QVariant TasksModel::data(const QModelIndex &index, int role) const
                 return QColor(Qt::lightGray); // insert new task row
             else if (c > 0 && c < cc - 1 && person(c).overload)
                 return QColor(Qt::red); // overloaded people are red-highlighted
+        } else if ((inEsteems(index) && !vdata[r].esteems[person(c)].tkn)          // not taken esteem
+                   || (c == cc - 1 && index.data().toString() == STR_NO_ESTEEM)) { // empty avg. column
+            return QColor(Qt::lightGray);
         }
 
         break;
