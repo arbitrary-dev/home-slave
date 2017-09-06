@@ -1,8 +1,8 @@
-home-slave
+Home Slave
 ======
 
 A useful app to keep families unite and lovely.
-It helps evenly distibute home duties upon sad family members.
+It helps evenly distribute home duties upon sad family members.
 
 TODO
 ----
